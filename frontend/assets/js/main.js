@@ -12,5 +12,11 @@ header.appendChild(createNavbar());
 // Result: the navigation bar appears automatically at the top of the page
 // when the website loads, without writing HTML manually on every page.
 
+// same with the footer (tryout lol)
+
+import { createFooter } from './components/footer.js';
+
+const footer = document.querySelector('footer');
+footer.appendChild(createFooter());
 
 // THIS IS ALL AN EXAMPLE, EVERYTHING CAN BE CHANGED, I'M JUST TESTING :D
