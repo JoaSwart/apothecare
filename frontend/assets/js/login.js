@@ -69,4 +69,4 @@ createApp({
 
 			return { actief, email, wachtwoord, isBeheerder, submit, cancel, toggleBeheerder, subtitle };
 	}
-}).mount('#app');
+}).mount('#log');
