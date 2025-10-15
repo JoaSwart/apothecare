@@ -35,9 +35,16 @@
 
       <nav class="segmented">
         <button :class="['seg-btn', active === 'bestellingen' ? 'active' : '']" @click="active='bestellingen'">Bestellingen</button>
-        <button :class="['seg-btn', active === 'producten' ? 'active' : '']" @click="active='producten'">Producten</button>
+        <button :class="['seg-btn', active === 'producten' ? 'active' : '']" @click="setActiveAndFetch('producten')">Producten</button>
         <button :class="['seg-btn', active === 'klanten' ? 'active' : '']" @click="active='klanten'">Klanten</button>
-        <input type="text" placeholder="Search" class="search-input" />
+        <input 
+          type="text" 
+          placeholder="Zoek op naam of categorie..." 
+          class="search-input" 
+          v-model="searchQuery"
+          @input="filterProducts"
+          @keyup.enter="filterProducts"
+        />
       </nav>
 
       <!-- Bestellingen section -->
@@ -77,9 +84,12 @@
         <h3 class="panel-title">Producten Overzicht</h3>
 
         <!-- Add product button -->
-        <button @click="addProduct" class="btn-add">+ Product toevoegen</button>
+        <button @click="openAddModal" class="btn-add">+ Product toevoegen</button>
 
-        <div class="table-wrap">
+        <!-- Loading indicator -->
+        <p v-if="loadingProducts">Laden producten...</p>
+
+        <div class="table-wrap" v-if="!loadingProducts">
           <table class="orders-table">
             <thead>
               <tr>
@@ -92,17 +102,22 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="product in productsList" :key="product.id">
-                <td>{{ product.naam }}</td>
-                <td>{{ product.categorie }}</td>
-                <td>€{{ product.prijs.toFixed(2) }}</td>
-                <td>{{ product.gram }}g</td>
+              <tr v-for="product in filteredProducts" :key="product.product_id">
+                <td>{{ product.name }}</td>
+                <td>{{ product.category }}</td>
+                <td>€{{ Number(product.price).toFixed(2) }}</td>
+                <td>{{ product.grams }}g</td>
                 <td>
-                  <img :src="product.afbeelding" alt="Product afbeelding" style="width: 50px; height: auto;" />
+                  <img :src="product.image_url" alt="Product afbeelding" style="width: 50px; height: auto;" />
                 </td>
                 <td>
-                  <a href="#" @click.prevent="editProduct(product)">Bewerken</a> |
-                  <a href="#" @click.prevent="deleteProduct(product)">Delete</a>
+                  <a href="#" @click.prevent="openEditModal(product)">Bewerken</a> |
+                  <a href="#" @click.prevent="deleteProduct(product)">Verwijderen</a>
+                </td>
+              </tr>
+              <tr v-if="filteredProducts.length === 0">
+                <td colspan="6">
+                  {{ searchQuery ? 'Geen producten gevonden voor "' + searchQuery + '"' : 'Geen producten gevonden in de database.' }}
                 </td>
               </tr>
             </tbody>
@@ -124,7 +139,6 @@
                 <th>Telefoon</th>
                 <th>Registratiedatum</th>
                 <th>Bestellingen</th>
-                <th>Totaal besteed</th>
                 <th>Acties</th>
               </tr>
             </thead>
@@ -136,7 +150,6 @@
                 <td>{{ klant.telefoon || 'N/A' }}</td>
                 <td>{{ klant.registratiedatum }}</td>
                 <td class="center">{{ klant.bestellingen }}</td>
-                <td class="center">€{{ klant.totaalBesteed.toFixed(2) }}</td>
                 <td>
                   <a href="#" @click.prevent="editKlant(klant)">Bewerken</a> |
                   <a href="#" @click.prevent="deleteKlant(klant)">Verwijderen</a>
@@ -147,20 +160,50 @@
         </div>
       </section>
 
+      <!-- Modal for Add/Edit Product -->
+      <div v-if="showModal" class="modal-overlay" @click="closeModal">
+        <div class="modal-content" @click.stop>
+          <h3>{{ isEditMode ? 'Product Bewerken' : 'Nieuw Product Toevoegen' }}</h3>
+          <form @submit.prevent="saveProduct">
+            <label>Naam:</label>
+            <input v-model="modalForm.name" required />
+
+            <label>Categorie:</label>
+            <input v-model="modalForm.category" required />
+
+            <label>Prijs (€):</label>
+            <input type="number" step="0.01" v-model.number="modalForm.price" required />
+
+            <label>Gram (g):</label>
+            <input type="number" v-model.number="modalForm.grams" required />
+
+            <label>Afbeelding URL:</label>
+            <input v-model="modalForm.image_url" required />
+
+            <div class="modal-actions">
+              <button type="submit">{{ isEditMode ? 'Bijwerken' : 'Toevoegen' }}</button>
+              <button type="button" @click="closeModal">Annuleren</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
     </main>
   </div>
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, computed } from 'vue'; // Add computed for filteredProducts
 
 export default {
   name: 'DashBoard',
   setup() {
     const omzet = ref(930);
-    const totalOrders = ref(0); // Will set from data
-    const products = ref(0); // Will set from data
+    const totalOrders = ref(0);
+    const products = ref(0);
     const active = ref('bestellingen');
+    const loadingProducts = ref(false);
+    const searchQuery = ref(''); 
 
     const orders = ref([
       { id:1, name:'Jan de Vries', contact:'jan@email.com', items:3, date:'14 okt 2025', status:'Voltooid', statusClass:'voltooid' },
@@ -168,95 +211,174 @@ export default {
       { id:3, name:'Piet Jansen', contact:'piet@email.com', items:5, date:'12 okt 2025', status:'In afwachting', statusClass:'inafwachting' },
     ]);
 
-    // Sample products data (replace with API fetch later)
-    const productsList = ref([
-      { id: 1, naam: 'Paracetamol', categorie: 'Pijnstillers', prijs: 2.99, gram: 500, afbeelding: 'https://via.placeholder.com/50?text=Para' },
-      { id: 2, naam: 'Vitamine C', categorie: 'Supplementen', prijs: 5.49, gram: 1000, afbeelding: 'https://via.placeholder.com/50?text=VitC' },
-      { id: 3, naam: 'Ibuprofen', categorie: 'Pijnstillers', prijs: 3.99, gram: 200, afbeelding: 'https://via.placeholder.com/50?text=Ibu' },
-    ]);
+    const productsList = ref([]);
 
-    // Sample customers data (replace with API fetch later)
     const klantenList = ref([
-      { 
-        id: 1, 
-        naam: 'Jan de Vries', 
-        email: 'jan@email.com', 
-        telefoon: '06-12345678',
-        registratiedatum: '12 okt 2025',
-        bestellingen: 3,
-        totaalBesteed: 89.50
-      },
-      { 
-        id: 2, 
-        naam: 'Maria Bakker', 
-        email: 'maria@email.com', 
-        telefoon: '06-87654321',
-        registratiedatum: '10 okt 2025',
-        bestellingen: 1,
-        totaalBesteed: 15.99
-      },
-      { 
-        id: 3, 
-        naam: 'Piet Jansen', 
-        email: 'piet@email.com', 
-        telefoon: '',
-        registratiedatum: '08 okt 2025',
-        bestellingen: 5,
-        totaalBesteed: 234.75
-      },
+      { id: 1, naam: 'Jan de Vries', email: 'jan@email.com', telefoon: '06-12345678', registratiedatum: '12 okt 2025', bestellingen: 3 },
+      { id: 2, naam: 'Maria Bakker', email: 'maria@email.com', telefoon: '06-87654321', registratiedatum: '10 okt 2025', bestellingen: 1 },
+      { id: 3, naam: 'Piet Jansen', email: 'piet@email.com', telefoon: '', registratiedatum: '08 okt 2025', bestellingen: 5 },
     ]);
 
-    // Set stats from data
     totalOrders.value = orders.value.length;
-    products.value = productsList.value.length;
 
-    function view(order) {
-      alert('Bekijk order #' + order.id + ' (demo)');
-    }
+    const baseUrl = 'http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/';
 
-    // Product actions (demo alerts)
-    function addProduct() {
-      alert('Nieuw product toevoegen (demo)');
-    }
+    // Modal state
+    const showModal = ref(false);
+    const isEditMode = ref(false);
+    const modalForm = ref({
+      product_id: null,
+      name: '',
+      category: '',
+      price: 0,
+      grams: 0,
+      image_url: ''
+    });
 
-    function editProduct(product) {
-      alert('Bewerk product #' + product.id + ' (demo)');
-    }
+    // Computed for filtered products based on search
+    const filteredProducts = computed(() => {
+      if (!searchQuery.value.trim()) {
+        return productsList.value;
+      }
+      const query = searchQuery.value.toLowerCase().trim();
+      return productsList.value.filter(product => 
+        product.name.toLowerCase().includes(query) || 
+        product.category.toLowerCase().includes(query)
+      );
+    });
 
-    function deleteProduct(product) {
-      if (confirm('Weet je zeker dat je product #' + product.id + ' wilt verwijderen?')) {
-        // Simulate delete
-        productsList.value = productsList.value.filter(p => p.id !== product.id);
-        products.value = productsList.value.length;
-        alert('Product verwijderd (demo)');
+    // Helper to set active and fetch
+    function setActiveAndFetch(tab) {
+      active.value = tab;
+      if (tab === 'producten') {
+        fetchProducts();
       }
     }
 
-    // Customer actions (demo alerts)
-    function editKlant(klant) {
-      alert('Bewerk klant #' + klant.id + ' (demo)');
-    }
-
-    function deleteKlant(klant) {
-      if (confirm('Weet je zeker dat je klant #' + klant.id + ' wilt verwijderen?')) {
-        // Simulate delete
-        klantenList.value = klantenList.value.filter(k => k.id !== klant.id);
-        alert('Klant verwijderd (demo)');
+    // Fetch products
+    async function fetchProducts() {
+      loadingProducts.value = true;
+      try {
+        const res = await fetch(baseUrl + 'products.php?action=list', { method: 'GET' });
+        const data = await res.json();
+        if (data.success) {
+          productsList.value = data.products.map(p => ({
+            ...p,
+            price: parseFloat(p.price),
+            grams: parseInt(p.grams, 10)
+          }));
+          products.value = productsList.value.length;
+        } else {
+          alert('Fout bij ophalen: ' + (data.message || ''));
+          productsList.value = [];
+          products.value = 0;
+        }
+      } catch (err) {
+        alert('Netwerkfout: ' + err.message);
+      } finally {
+        loadingProducts.value = false;
       }
     }
 
-    // Simplified logout
-    function handleLogout() {
-      localStorage.removeItem('user'); // Clear
-      alert('Uitgelogd!');
-      window.location.reload(); // Quick switch back
+    // Filter products on search input
+    function filterProducts() {
+      console.log('Searching for:', searchQuery.value);
     }
+
+    // Open modal for add
+    function openAddModal() {
+      isEditMode.value = false;
+      modalForm.value = { product_id: null, name: '', category: '', price: 0, grams: 0, image_url: '' };
+      showModal.value = true;
+    }
+
+    // Open modal for edit
+    function openEditModal(product) {
+      isEditMode.value = true;
+      modalForm.value = {
+        product_id: product.product_id,
+        name: product.name,
+        category: product.category,
+        price: product.price,
+        grams: product.grams,
+        image_url: product.image_url
+      };
+      showModal.value = true;
+    }
+
+    // Close modal
+    function closeModal() {
+      showModal.value = false;
+    }
+
+    // Save 
+    async function saveProduct() {
+      const formData = new URLSearchParams();
+      formData.append('action', isEditMode.value ? 'update' : 'add');
+      formData.append('name', modalForm.value.name);
+      formData.append('category', modalForm.value.category);
+      formData.append('price', modalForm.value.price);
+      formData.append('grams', modalForm.value.grams);
+      formData.append('image_url', modalForm.value.image_url);
+      if (isEditMode.value) formData.append('product_id', modalForm.value.product_id);
+
+      try {
+        const res = await fetch(baseUrl + 'products.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(data.message);
+          closeModal();
+          fetchProducts(); // Refresh list
+        } else {
+          alert('Fout: ' + data.message);
+        }
+      } catch (err) {
+        alert('Netwerkfout: ' + err.message);
+      }
+    }
+
+    // Delete product 
+    async function deleteProduct(product) {
+      if (confirm(`Weet je zeker dat je product "${product.name}" wilt verwijderen?`)) {
+        const formData = new URLSearchParams();
+        formData.append('action', 'delete');
+        formData.append('product_id', product.product_id);
+
+        try {
+          const res = await fetch(baseUrl + 'products.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData
+          });
+          const data = await res.json();
+          if (data.success) {
+            alert(data.message);
+            fetchProducts(); // Refresh list after delete
+          } else {
+            alert('Fout bij verwijderen: ' + data.message);
+          }
+        } catch (err) {
+          alert('Netwerkfout: ' + err.message);
+        }
+      }
+    }
+
+    function view(order) { alert('Bekijk #' + order.id); }
+    function editKlant(klant) { alert('Bewerk #' + klant.id); }
+    function deleteKlant(klant) { if (confirm('Verwijderen?')) klantenList.value = klantenList.value.filter(k => k.id !== klant.id); }
+    function handleLogout() { localStorage.removeItem('user'); alert('Uitgelogd!'); window.location.reload(); }
 
     return { 
       omzet, totalOrders, products, orders, view, active, 
-      productsList, addProduct, editProduct, deleteProduct,
+      productsList, filteredProducts, searchQuery, loadingProducts,
       klantenList, editKlant, deleteKlant,
-      handleLogout 
+      handleLogout, setActiveAndFetch,
+      showModal, openAddModal, openEditModal, closeModal, saveProduct, modalForm, isEditMode,
+      deleteProduct, filterProducts
     };
   }
 }
@@ -288,7 +410,13 @@ html,body{height:100%;}
 .segmented{ margin:18px 0; display: flex; align-items: center; }
 .seg-btn{ border-radius:8px; border:1px solid rgba(16,24,40,0.06); padding:8px 14px; background:#fff; margin-right:8px; cursor:pointer; }
 .seg-btn.active{ background:#0f172a; color:#fff; }
-.search-input { margin-left: auto; padding: 8px; border: 1px solid rgba(16,24,40,0.06); border-radius: 8px; }
+.search-input { 
+  margin-left: auto; 
+  padding: 8px; 
+  border: 1px solid rgba(16,24,40,0.06); 
+  border-radius: 8px; 
+  min-width: 200px;
+}
 
 .panel{ background:transparent; }
 .panel-title{ background:var(--card-bg); padding:16px 18px; border-radius:10px 10px 0 0; border:1px solid rgba(16,24,40,0.04); margin:0 0 0; }
@@ -306,4 +434,30 @@ html,body{height:100%;}
 .orders-table a{ color:#111827; text-decoration:none; }
 
 .btn-add { margin-bottom: 16px; padding: 8px 14px; background: #0f172a; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+}
+.modal-content h3 { margin-top: 0; }
+.modal-content label { display: block; margin: 10px 0 5px; font-weight: bold; }
+.modal-content input {
+  width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;
+}
+.modal-actions { margin-top: 20px; display: flex; gap: 10px; }
+.modal-actions button {
+  padding: 8px 16px; background: #0f172a; color: white; border: none; border-radius: 4px; cursor: pointer;
+}
+.modal-actions button[type="button"] { background: #ccc; color: black; }
 </style>
