@@ -171,70 +171,86 @@
   </div>
 </template>
 
-<script setup>
+<script>
 import { ref, onMounted, onUnmounted } from 'vue';
-import ChatWidget from './ChatWidget.vue';
+import ChatWidget from './ChatWidget.vue'; // Pas pad aan indien nodig
 
-const track = ref(null);
-const nextButton = ref(null);
-const prevButton = ref(null);
-const currentIndex = ref(0);
+export default {
+  name: 'LandingPage',
+  components: {
+    ChatWidget
+  },
+  setup() {
+    const track = ref(null);
+    const nextButton = ref(null);
+    const prevButton = ref(null);
+    const currentIndex = ref(0);
 
-const getVisibleCards = () => {
-    if (window.innerWidth <= 768) return 1;
-    if (window.innerWidth <= 992) return 2;
-    return 3;
-};
+    const getVisibleCards = () => {
+        if (window.innerWidth <= 768) return 1;
+        if (window.innerWidth <= 992) return 2;
+        return 3;
+    };
 
-const updateCarousel = () => {
-    if (!track.value || !prevButton.value || !nextButton.value) return;
-    
-    const cards = Array.from(track.value.children);
-    if (cards.length === 0) return;
+    const updateCarousel = () => {
+        if (!track.value || !prevButton.value || !nextButton.value) return;
+        
+        const cards = Array.from(track.value.children);
+        if (cards.length === 0) return;
 
-    const visibleCards = getVisibleCards();
-    const cardWidth = cards[0].getBoundingClientRect().width;
-    const gap = 30;
-    const moveDistance = (cardWidth + gap) * currentIndex.value;
+        const visibleCards = getVisibleCards();
+        const cardWidth = cards[0].getBoundingClientRect().width;
+        const gap = 30;
+        const moveDistance = (cardWidth + gap) * currentIndex.value;
 
-    track.value.style.transform = `translateX(-${moveDistance}px)`;
-    prevButton.value.disabled = currentIndex.value === 0;
-    nextButton.value.disabled = currentIndex.value >= cards.length - visibleCards;
-};
+        track.value.style.transform = `translateX(-${moveDistance}px)`;
+        prevButton.value.disabled = currentIndex.value === 0;
+        nextButton.value.disabled = currentIndex.value >= cards.length - visibleCards;
+    };
 
-const nextSlide = () => {
-    const cards = Array.from(track.value.children);
-    const visibleCards = getVisibleCards();
-    if (currentIndex.value < cards.length - visibleCards) {
-        currentIndex.value++;
+    const nextSlide = () => {
+        const cards = Array.from(track.value.children);
+        const visibleCards = getVisibleCards();
+        if (currentIndex.value < cards.length - visibleCards) {
+            currentIndex.value++;
+            updateCarousel();
+        }
+    };
+
+    const prevSlide = () => {
+        if (currentIndex.value > 0) {
+            currentIndex.value--;
+            updateCarousel();
+        }
+    };
+
+    const handleResize = () => {
+        currentIndex.value = 0;
         updateCarousel();
-    }
-};
+    };
 
-const prevSlide = () => {
-    if (currentIndex.value > 0) {
-        currentIndex.value--;
+    onMounted(() => {
         updateCarousel();
-    }
+        window.addEventListener('resize', handleResize);
+    });
+
+    onUnmounted(() => {
+        window.removeEventListener('resize', handleResize);
+    });
+
+    return {
+      track,
+      nextButton,
+      prevButton,
+      nextSlide,
+      prevSlide
+    };
+  }
 };
-
-const handleResize = () => {
-    currentIndex.value = 0;
-    updateCarousel();
-};
-
-onMounted(() => {
-    updateCarousel();
-    window.addEventListener('resize', handleResize);
-});
-
-onUnmounted(() => {
-    window.removeEventListener('resize', handleResize);
-});
 </script>
 
 <style>
-/* Hier komt ALLE CSS van je originele bestand, BEHALVE de CSS voor de chat widget. */
+
 * {
     box-sizing: border-box;
     margin: 0;

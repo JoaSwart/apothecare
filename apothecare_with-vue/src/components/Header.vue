@@ -17,7 +17,7 @@
       <i v-else @click="toggleSearch" class="fa-solid fa-magnifying-glass"></i>
 
       <!-- User icon -->
-      <i class="fa-solid fa-user"></i>
+      <i class="fa-solid fa-user" @click="$emit('open-login')"></i>
 
       <!-- Cart icon -->
       <i class="fa-solid fa-cart-shopping"></i>
