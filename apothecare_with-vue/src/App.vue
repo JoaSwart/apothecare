@@ -1,28 +1,31 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <MyComponent/>
+  <div id="app">
+    <!-- Site Header -->
+    <SiteHeader />
+
+    <!-- Login Page -->
+    <LoginPage />
+  </div>
 </template>
 
 <script>
-import MyComponent from './components/MyComponent.vue'
+import LoginPage from './components/Login.vue'
+import SiteHeader from './components/Header.vue'
 
 export default {
   name: 'App',
   components: {
-    MyComponent
+    LoginPage,
+    SiteHeader
   }
 }
-
-
 </script>
 
 <style>
+/* Optional global styles */
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
 }
 </style>
