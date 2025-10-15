@@ -1,23 +1,27 @@
 <?php
-header("Access-Control-Allow-Origin: *"); // allow any origin
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Origin: http://localhost:8080");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
+
 include __DIR__ . '/../config.php';
 
-// Get raw JSON from Vue
-$data = json_decode(file_get_contents("php://input"), true);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['success' => false, 'message' => 'Alleen POST is toegestaan']);
+    exit;
+}
 
-$name = $data['name'] ?? '';
-$email = $data['email'] ?? '';
-$password = $data['password'] ?? '';
+// Haal data uit POST
+$name = $_POST['name'] ?? '';
+$email = $_POST['email'] ?? '';
+$password = $_POST['password'] ?? '';
 
 if (!$name || !$email || !$password) {
     echo json_encode(['success' => false, 'message' => 'Alle velden zijn verplicht']);
     exit;
 }
 
-// Hash password
+// Hash het wachtwoord
 $hashed = password_hash($password, PASSWORD_BCRYPT);
 
 try {
@@ -25,7 +29,11 @@ try {
     $stmt->execute([$name, $email, $hashed]);
     echo json_encode(['success' => true, 'message' => 'Registratie succesvol!']);
 } catch (PDOException $e) {
-    // duplicate email or other error
-    echo json_encode(['success' => false, 'message' => 'Fout bij registratie: ' . $e->getMessage()]);
+    // Specifiek checken op duplicate email
+    if ($e->getCode() == 23000) {
+        echo json_encode(['success' => false, 'message' => 'E-mail is al in gebruik']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Fout bij registratie']);
+    }
 }
 ?>

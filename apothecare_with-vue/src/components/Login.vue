@@ -55,8 +55,9 @@
   </div>
 </template>
 
+
 <script>
-import { ref } from 'vue';
+import { ref, getCurrentInstance } from 'vue';
 
 export default {
   name: "LoginPage",
@@ -70,9 +71,9 @@ export default {
     const subtitle = ref('Log in of maak een account aan');
 
     const baseUrl = 'http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/';
+    const { emit } = getCurrentInstance();
 
     async function submit() {
-      // REGISTRATION
       if (actief.value === 'register') {
         if (!name.value || !email.value || !wachtwoord.value || !confirmwachtwoord.value) {
           alert('Vul alle velden in.');
@@ -83,15 +84,15 @@ export default {
           return;
         }
 
+        const formData = new FormData();
+        formData.append('name', name.value);
+        formData.append('email', email.value);
+        formData.append('password', wachtwoord.value);
+
         try {
           const res = await fetch(baseUrl + 'register.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: name.value,
-              email: email.value,
-              password: wachtwoord.value
-            })
+            body: formData
           });
           const data = await res.json();
           alert(data.message);
@@ -111,31 +112,27 @@ export default {
         return;
       }
 
+      const formData = new FormData();
+      formData.append('email', email.value);
+      formData.append('password', wachtwoord.value);
+
       try {
         const res = await fetch(baseUrl + 'login.php', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: email.value,
-            password: wachtwoord.value
-          })
+          body: formData
         });
         const data = await res.json();
 
         if (data.success) {
           alert(`Inloggen succesvol! ${data.is_admin ? 'Admin' : 'Klant'}`);
+
           localStorage.setItem('user', JSON.stringify({
             user_id: data.user_id,
             username: data.username,
             is_admin: data.is_admin
           }));
 
-          // redirect to dashboard (create these pages)
-          if (data.is_admin) {
-            window.location.href = '/admin-dashboard.html';
-          } else {
-            window.location.href = '/user-dashboard.html';
-          }
+          emit('login-success');
         } else {
           alert(data.message);
         }
@@ -161,7 +158,6 @@ export default {
   }
 }
 </script>
-
 
 
 
@@ -207,7 +203,7 @@ html,body{
 
 .tabs{ display:flex; gap:8px; justify-content:center; margin:10px 0 12px; }
 .tab{ flex:1 1 0; max-width:180px; padding:8px 12px; border-radius:16px; background:transparent; border:0; cursor:pointer; font-size:13px; color:var(--muted); }
-.tab.active{ background:#f2f4f5; color:#111827; box-shadow: inset 0 -1px 0 rgba(0,0,0,0.03); }
+.tab.active{ background:#f2f4f5; color:#176635; box-shadow: inset 0 -1px 0 rgba(0,0,0,0.03); }
 
 .form{ text-align:left; }
 .label{ display:block; margin:8px 0 6px; font-size:13px; color:#111827; }
