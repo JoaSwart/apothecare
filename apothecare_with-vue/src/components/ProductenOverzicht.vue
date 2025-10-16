@@ -57,27 +57,29 @@
           </label>
         </article>
 
-            <article class="products">
-              <div
-                v-for="product in filteredProducts"
-                :key="product.title"
-                class="item"
-              >
-                <img :src="product.img" :alt="product.title" class="product-img" />
-                <div class="product-tags">
-                  <span class="tag" v-for="tag in product.klachten" :key="tag">{{ tag }}</span>
-                </div>
-                <h3 class="product-title">{{ product.title }}</h3>
-                <p class="product-desc">{{ product.desc }}</p>
-                <div class="product-info">
-                  <span class="weight">{{ product.weight }}</span>
-                  <span class="price">{{ product.price }}</span>
-                </div>
-                <button class="add-btn" @click="addToCart(product)">
-                  <i class="fa-solid fa-cart-shopping"></i> Toevoegen
-                </button>
-              </div>
-            </article>
+        <article class="products">
+          <div
+            v-for="product in filteredProducts"
+            :key="product.title"
+            class="item"
+          >
+            <img :src="product.img" :alt="product.title" class="product-img" />
+            <div class="product-tags">
+              <span class="tag" v-for="tag in product.klachten" :key="tag">{{
+                tag
+              }}</span>
+            </div>
+            <h3 class="product-title">{{ product.title }}</h3>
+            <p class="product-desc">{{ product.desc }}</p>
+            <div class="product-info">
+              <span class="weight">{{ product.weight }}</span>
+              <span class="price">{{ product.price }}</span>
+            </div>
+            <button class="add-btn" @click="addToCart(product)">
+              <i class="fa-solid fa-cart-shopping"></i> Toevoegen
+            </button>
+          </div>
+        </article>
       </section>
     </main>
 
@@ -337,7 +339,7 @@ input[type="checkbox"] {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   /* height: auto; */
-  height: 560px;
+  height: 620px;
   width: 330px;
   padding-bottom: 15px;
   display: flex;
