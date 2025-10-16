@@ -293,7 +293,8 @@ p {
 }
 
 .hero-section {
-    padding: 120px 0;
+    padding:  0;
+    height: 90vh;
     position: relative;
     overflow: hidden;
     background: linear-gradient(270deg, #dde4ec, #f4f6f5, #cfe0e0, #e6f5ef);
