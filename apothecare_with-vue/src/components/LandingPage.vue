@@ -67,28 +67,28 @@
           <div class="carousel-wrapper">
             <div class="news-grid" ref="track">
               <article class="news-card">
-                <img src="/assets/vitamineproducten.jpg" alt="vitamineproducten">
+                <img src="../assets/vitamineproducten.jpg" alt="vitamineproducten">
                 <div class="card-content">
                   <p class="date">14 okt 2025</p>
                   <h3>Nieuwe vitamineproducten aangekomen</h3>
                 </div>
               </article>
               <article class="news-card">
-                <img src="/assets/gezondewinter.jpg" alt="gezonde winter">
+                <img src="../assets/gezondewinter.jpg" alt="gezonde winter">
                 <div class="card-content">
                   <p class="date">12 okt 2025</p>
                   <h3>Tips voor een gezonde winter</h3>
                 </div>
               </article>
               <article class="news-card">
-                <img src="/assets/kruidenthee.jpg" alt="kruidenthee">
+                <img src="../assets/kruidenthee.jpg" alt="kruidenthee">
                 <div class="card-content">
                   <p class="date">10 okt 2025</p>
                   <h3>Biologische kruidenthee collectie</h3>
                 </div>
               </article>
               <article class="news-card">
-                <img src="/assets/aiassistent.png" alt="ai-assistent">
+                <img src="../assets/aiassistent.png" alt="ai-assistent">
                 <div class="card-content">
                   <p class="date">8 okt 2025</p>
                   <h3>AI-Assistent nu beschikbaar</h3>
@@ -141,21 +141,21 @@
                 <p class="subtitle" style="margin-bottom: 40px;">Ontdek ons uitgebreide assortiment</p>
                 
                 <div class="category-grid">
-                    <a href="#" class="category-card" style="background-image: url('/assets/supplementen.jpg');">
+                    <a href="#" class="category-card" style="background-image: url('../assets/supplementen.jpg');">
                         <div class="card-overlay">
                             <h3>Vitamines & Supplementen</h3>
                             <p>Voor optimale gezondheid</p>
                             <span>Bekijk producten &rarr;</span>
                         </div>
                     </a>
-                     <a href="#" class="category-card" style="background-image: url('/assets/kruidentheendranken.jpg');">
+                     <a href="#" class="category-card" style="background-image: url('../assets/kruidentheendranken.jpg');">
                         <div class="card-overlay">
                             <h3>Kruidenthee & Dranken</h3>
                             <p>Natuurlijke ontspanning</p>
                             <span>Bekijk producten &rarr;</span>
                         </div>
                     </a>
-                     <a href="#" class="category-card" style="background-image: url('/assets/aromatherapie.jpg');">
+                     <a href="#" class="category-card" style="background-image: url('../assets/aromatherapie.jpg');">
                         <div class="card-overlay">
                             <h3>Aromatherapy & Oliën</h3>
                             <p>Voor lichaam en geest</p>

@@ -3,9 +3,9 @@
     <h2 class="logo">apothecare</h2>
 
     <nav>
-      <a href="#">Home</a>
-      <a href="#">Products</a>
-      <a href="#">Cart</a>
+      <a href="#" @click.prevent="$emit('go-home')">Home</a>
+      <a href="#" @click.prevent="$emit('go-products')">Products</a>
+      <a href="#" @click.prevent="$emit('go-cart')">Cart</a>
     </nav>
 
     <div class="icons">
@@ -44,75 +44,40 @@ export default {
 <style scoped>
 header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 15px 5%;
+  justify-content: space-between;
+  padding: 20px 40px;
   background-color: #fff;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #ddd;
+  font-family: 'Poppins', sans-serif;
 }
 
 .logo {
   font-size: 24px;
-  font-weight: 700;
-  color: #333;
-}
-
-nav {
-  display: flex;
-  gap: 40px;
+  font-weight: bold;
+  color: #111;
 }
 
 nav a {
+  margin: 0 15px;
   text-decoration: none;
-  color: #333;
+  color: #111;
   font-weight: 500;
-  font-size: 16px;
-  transition: color 0.2s;
-}
-
-nav a:hover {
-  color: #6e906e;
+  cursor: pointer;
 }
 
 .icons {
   display: flex;
   align-items: center;
-  gap: 25px;
-}
-
-.icons i {
+  gap: 15px;
   font-size: 18px;
-  color: #333;
   cursor: pointer;
-  padding: 10px;
-  border-radius: 8px;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.icons i:hover {
-  background-color: #6fb783;
-  color: #fafafa;
-}
-
-.search-container {
-  display: flex;
-  align-items: center;
-  border: 1px solid #6c946c;
-  box-shadow: 0 0 0 3px rgba(108, 145, 108, 0.78);
-  border-radius: 8px;
-  padding: 7px 10px;
 }
 
 .search-container input {
-  border: none;
-  outline: none;
-  background: transparent;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-}
-
-.search-container i:hover {
-  background-color: transparent;
-  color: #333;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  width: 200px;
 }
 </style>
