@@ -81,7 +81,7 @@
       </section>
     </main>
 
-    <site-footer></site-footer>
+  <!-- Footer is rendered in App.vue; don't duplicate -->
   </div>
 </template>
 
@@ -123,69 +123,11 @@ export default {
         { value: "Verkoudheid", label: "Verkoudheid" },
         { value: "Vermoeidheid", label: "Vermoeidheid" },
       ],
-      products: [
-        {
-          title: "Vitamine D3 Capsules",
-          desc: "Ondersteunt het immuunsysteem en bevordert sterke botten. Ideaal voor dagelijks gebruik.",
-          img: "../../assets/img/vitamin3d.jpeg",
-          prijs: "10tot15",
-          categorie: "Vitaminens",
-          klachten: ["Vermoeidheid", "Botgezondheid"],
-          weight: "60g",
-          price: "€14.99",
-        },
-        {
-          title: "Biologische Kamillethee",
-          desc: "Rustgevende thee voor ontspanning en betere slaap. 100% natuurlijke ingrediënten.",
-          img: "../src/assets/img/kamillethee.jpeg",
-          prijs: "tot10",
-          categorie: "Kruidenthee",
-          klachten: ["Stress", "Slaapproblemen", "Maagklachten"],
-          weight: "100g",
-          price: "€8.99",
-        },
-        {
-          title: "Omega-3 Visolie",
-          desc: "Rijk aan EPA en DHA voor hart- en hersengezondheid. Hoogwaardige kwaliteit.",
-          img: "../src/assets/img/omega3.jpeg",
-          prijs: "15tot20",
-          categorie: "Supplementen",
-          klachten: ["Concentratie", "Hartgezondheid", "Cholesterol"],
-          weight: "90g",
-          price: "€19.99",
-        },
-        {
-          title: "Multivitamine Complex",
-          desc: "Complete dagelijkse vitaminevoorziening in één capsule. Voor alle leeftijden.",
-          img: "../src/assets/img/vitamion.jpeg",
-          prijs: "15tot20",
-          categorie: "Vitaminens",
-          klachten: ["Vermoeidheid", "Algemeen", "Energie"],
-          weight: "75g",
-          price: "€16.99",
-        },
-        {
-          title: "Etherische Lavendelolie",
-          desc: "Kalmerende olie voor aromatherapie en ontspanning. 100% puur en natuurlijk.",
-          img: "../src/assets/img/lavender.jpeg",
-          prijs: "10tot15",
-          categorie: "Aromatherapie",
-          klachten: ["Stress", "Slaapproblemen", "Hoofdpijn"],
-          weight: "30g",
-          price: "€12.99",
-        },
-        {
-          title: "Biologische honing",
-          desc: "Pure biologische honing met antibacteriële eigenschappen. Lokaal geproduceerd.",
-          img: "../src/assets/img/honing.jpeg",
-          prijs: "10tot15",
-          categorie: "Voeding",
-          klachten: ["Keelpijn", "Verkoudheid", "Immuunsysteem"],
-          weight: "250g",
-          price: "€9.99",
-        },
-      ],
+      products: [],
     };
+  },
+  mounted() {
+    this.fetchProducts();
   },
   computed: {
     filteredProducts() {
@@ -206,6 +148,43 @@ export default {
       });
     },
   },
+    methods: {
+      async fetchProducts() {
+        try {
+          const res = await fetch('http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/products.php?action=list', { method: 'GET' });
+          const data = await res.json();
+          if (data.success && Array.isArray(data.products)) {
+            // Map backend fields to UI fields expected by this component
+            this.products = data.products.map(p => ({
+              title: p.name || 'Onbekend',
+              desc: p.category ? `${p.category}` : '',
+              img: p.image_url ? p.image_url : '../../assets/img/placeholder.png',
+              prijs: p.price ? String(p.price) : '',
+              categorie: p.category || '',
+              klachten: [],
+              weight: p.grams ? `${p.grams}g` : '',
+              price: p.price ? `€${parseFloat(p.price).toFixed(2)}` : '',
+            }));
+          } else {
+            console.warn('No products returned from API', data);
+          }
+        } catch (err) {
+          console.error('Error fetching products', err);
+        }
+      },
+
+      addToCart(product) {
+        try {
+          const cartJson = localStorage.getItem('cart');
+          const cart = cartJson ? JSON.parse(cartJson) : [];
+          cart.push({ title: product.title, price: product.price || product.price, qty: 1 });
+          localStorage.setItem('cart', JSON.stringify(cart));
+          alert(`${product.title} toegevoegd aan winkelwagen`);
+        } catch (err) {
+          console.error('Failed to add to cart', err);
+        }
+      }
+    }
 };
 </script>
 
@@ -221,25 +200,6 @@ body {
   font-family: sans-serif;
 }
 
-footer {
-  background-color: #ffffff;
-  display: flex;
-  color: #000000;
-  text-align: left;
-  padding: 20px 0;
-  position: relative;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  bottom: 0;
-  width: 100vw;
-  border-top: 1px solid #e0e0e0;
-  font-family: Arial, sans-serif;
-}
-
-footer div {
-  width: 30vw;
-  padding: 0 40px;
-}
 
 .footer-title {
   font-size: 18px;
@@ -257,7 +217,8 @@ footer div {
   display: flex;
   padding: 20px 0;
   width: 100%;
-  height: 100vh;
+  /* allow content to grow naturally so App-level footer is not overlapped */
+  min-height: 0;
 }
 
 .top-products {

@@ -2,7 +2,7 @@
   <div id="app">
     <!-- Site Header - always visible -->
     <SiteHeader 
-      @open-login="showLogin = true" 
+      @open-login="handleOpenLogin" 
       @go-home="goHome"
       @go-products="goProducts"
       @go-cart="goCart"
@@ -10,7 +10,7 @@
 
     <!-- Page transitions -->
     <transition name="fade" mode="out-in">
-      <div :key="currentPage">
+      <div :key="currentPage" class="page-content">
         <!-- Checkout should show regardless of login state -->
         <CheckoutPage
           v-if="currentPage === 'checkout'"
@@ -19,34 +19,34 @@
           @back="goCart"
         />
 
-        <!-- If user not logged in -->
+        <!-- Login modal can be shown regardless of login state (used for account/settings) -->
+        <LoginPage
+          v-if="showLogin"
+          @login-success="handleLoginSuccess"
+          key="login"
+        />
+
+        <!-- If user not logged in: show landing/products/cart as before -->
         <template v-if="!loggedInUser">
-          <!-- Show login if user icon clicked -->
-          <LoginPage
-            v-if="showLogin"
-            @login-success="handleLoginSuccess"
-            key="login"
-          />
-          <!-- Otherwise show landing or products -->
           <LandingPage
-            v-else-if="currentPage === 'landing'"
+            v-if="currentPage === 'landing'"
             @go-to-login="showLogin = true"
             key="landing"
           />
           <ProductenOverzicht
-            v-else-if="currentPage === 'products'"
+            v-if="currentPage === 'products'"
             key="products"
           />
           <CartPage
-            v-else-if="currentPage === 'cart'"
+            v-if="currentPage === 'cart'"
             key="cart"
             @checkout="goCheckout"
           />
         </template>
 
-        <!-- If admin logged in -->
+        <!-- If admin logged in (render only when currentPage is 'dashboard') -->
         <Dashboard
-          v-else-if="loggedInUser.is_admin"
+          v-else-if="loggedInUser && loggedInUser.is_admin && currentPage === 'dashboard'"
           :user="loggedInUser"
           key="dashboard"
         />
@@ -70,6 +70,9 @@
         />
       </div>
     </transition>
+
+    <!-- Site Footer - always visible at bottom -->
+    <SiteFooter />
   </div>
 </template>
 
@@ -77,6 +80,7 @@
 import { ref, onMounted } from 'vue';
 import LoginPage from './components/Login.vue';
 import SiteHeader from './components/Header.vue';
+import SiteFooter from './components/Footer.vue';
 import Dashboard from './components/Dashboard.vue';
 import LandingPage from './components/LandingPage.vue';
 import ProductenOverzicht from './components/ProductenOverzicht.vue';
@@ -85,7 +89,7 @@ import CheckoutPage from './components/Checkout.vue';
 
 export default {
   name: 'App',
-  components: { LoginPage, SiteHeader, Dashboard, LandingPage, ProductenOverzicht, CartPage, CheckoutPage },
+  components: { LoginPage, SiteHeader, SiteFooter, Dashboard, LandingPage, ProductenOverzicht, CartPage, CheckoutPage },
   setup() {
     const loggedInUser = ref(null);
     const showLogin = ref(false);
@@ -96,14 +100,27 @@ export default {
       loggedInUser.value = userJson ? JSON.parse(userJson) : null;
     };
 
+    const handleOpenLogin = () => {
+      // If admin is logged in, go to dashboard instead of showing login modal
+      if (loggedInUser.value && loggedInUser.value.is_admin) {
+        showLogin.value = false;
+        currentPage.value = 'dashboard';
+        return;
+      }
+      // Otherwise show login modal
+      showLogin.value = true;
+    };
+
     const handleLoginSuccess = () => {
       checkLogin();
       showLogin.value = false;
-      currentPage.value = 'landing'; // Go to landing after login
+      // If admin, go to dashboard; otherwise show landing
+      currentPage.value = (loggedInUser.value && loggedInUser.value.is_admin) ? 'dashboard' : 'landing';
     };
 
     const goHome = () => {
       showLogin.value = false; // hide login modal if open
+      // Home button should always go to the landing page
       currentPage.value = 'landing';
     };
 
@@ -122,9 +139,14 @@ export default {
       currentPage.value = 'checkout'
     }
 
-    onMounted(checkLogin);
+    onMounted(() => {
+      checkLogin();
+      if (loggedInUser.value && loggedInUser.value.is_admin) {
+        currentPage.value = 'dashboard';
+      }
+    });
 
-    return { loggedInUser, showLogin, handleLoginSuccess, currentPage, goHome, goProducts, goCart, goCheckout };
+    return { loggedInUser, showLogin, handleLoginSuccess, currentPage, goHome, goProducts, goCart, goCheckout, handleOpenLogin };
   },
 };
 </script>
@@ -134,6 +156,9 @@ export default {
   font-family: 'Poppins', sans-serif;
   margin: 0;
   padding: 0;
+  display: flex;
+  min-height: 100vh; /* ensure full viewport height */
+  flex-direction: column;
 }
 
 /* Smooth fade animation for transitions */
@@ -144,5 +169,14 @@ export default {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* make main content take remaining space so footer stays at bottom */
+.page-content {
+  flex: 1 0 auto;
+}
+
+.site-footer {
+  flex-shrink: 0;
 }
 </style>

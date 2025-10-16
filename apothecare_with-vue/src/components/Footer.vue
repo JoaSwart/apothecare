@@ -37,15 +37,17 @@ footer {
   position: relative;
   flex-wrap: wrap;
   justify-content: space-between;
-  bottom: 0;
-  width: 100vw;
   border-top: 1px solid #e0e0e0;
   font-family: Arial, sans-serif;
+  width: 100%; /* use container width to avoid horizontal scroll */
+  box-sizing: border-box;
 }
 
 footer div {
-  width: 30vw;
-  padding: 0 40px;
+  flex: 1 1 220px; /* responsive columns */
+  max-width: 33%;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .footer-title {

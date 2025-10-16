@@ -164,16 +164,18 @@ export default {
 
 <style scoped>
 /* Page background */
-:root{
-	--bg: #f4f5f5;
-	--card-bg: #fff;
-	--muted: #6b7280;
-	--accent: #2f6f4e;
-	--input-bg: #f6f8fa;
+
+/* define variables scoped to the login page container so they apply correctly */
+.page-bg{
+  --bg: #f4f5f5;
+  --card-bg: #fff;
+  --muted: #6b7280;
+  --accent: #2f6f4e;
+  --input-bg: #f6f8fa;
 }
 
 html,body{
-	height:100%;
+  height:100%;
 }
 
 .page-bg{
@@ -214,7 +216,17 @@ html,body{
 .buttons-row{ display:flex; gap:12px; margin-top:14px; }
 .btn{ padding:8px 12px; border-radius:6px; font-size:13px; cursor:pointer; flex:1 1 0; }
 .btn-ghost{ background:white; border:1px solid rgba(15,23,42,0.08); color:#111827; }
-.btn-primary{ background:var(--accent); color:#fff; border:0; }
+/* make primary button styling specific to this component to avoid being overridden */
+.login-card .btn-primary{
+  background: var(--accent) !important;
+  color: #fff !important;
+  border: 0 !important;
+}
+.login-card .btn-primary:hover,
+.login-card .btn-primary:focus{
+  filter: brightness(0.95);
+  outline: none;
+}
 
 .footer-link{ margin-top:16px; font-size:13px; color:var(--muted); text-align:center; }
 
