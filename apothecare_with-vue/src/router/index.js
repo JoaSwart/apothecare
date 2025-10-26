@@ -4,6 +4,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 import LandingPage from '../components/LandingPage.vue';
 import ProductenOverzicht from '../components/ProductenOverzicht.vue'; 
 import Cart from '../components/Cart.vue';
+import Dashboard from '../components/Dashboard.vue'; 
+
 const routes = [
   {
     path: '/', 
@@ -19,6 +21,11 @@ const routes = [
     path: '/cart',
     name: 'Cart',
     component: Cart
+  },
+  {
+    path: '/dashboard', 
+    name: 'Dashboard',
+    component: Dashboard
   }
 ];
 
