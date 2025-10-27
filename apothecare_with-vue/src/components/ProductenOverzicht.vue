@@ -1,5 +1,8 @@
 <template>
   <div>
+    <div v-if="showAdded" class="added-notification">
+      {{ addedMessage }}
+    </div>
     <main>
       <div class="top-products">
         <h3>Producten</h3>
@@ -86,6 +89,8 @@
 </template>
 
 <script>
+import useCart from "../store/cart";
+
 export default {
   name: "ProductenOverzicht",
   data() {
@@ -124,6 +129,8 @@ export default {
         { value: "Vermoeidheid", label: "Vermoeidheid" },
       ],
       products: [],
+      showAdded: false,
+      addedMessage: "",
     };
   },
   mounted() {
@@ -211,7 +218,6 @@ export default {
 body {
   font-family: sans-serif;
 }
-
 
 .footer-title {
   font-size: 18px;
@@ -488,5 +494,38 @@ hr {
 
 .padding {
   padding: 10px 20px;
+}
+
+.added-notification {
+  position: fixed;
+  z-index: 1000;
+  top: 20px;
+  right: 20px;
+  background: #2d7a4f;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  opacity: 0;
+  animation: slideIn 0.3s forwards, fadeOut 0.3s 1.7s forwards;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 </style>

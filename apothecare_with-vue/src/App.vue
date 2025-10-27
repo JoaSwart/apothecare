@@ -1,99 +1,41 @@
+
 <template>
   <div id="app">
-    <!-- Site Header - always visible -->
     <SiteHeader 
-      @open-login="handleOpenLogin" 
-      @go-home="goHome"
-      @go-products="goProducts"
-      @go-cart="goCart"
+      @open-login="handleOpenLogin"
     />
 
-    <!-- Page transitions -->
-    <transition name="fade" mode="out-in">
-      <div :key="currentPage" class="page-content">
-        <!-- Checkout should show regardless of login state -->
-        <CheckoutPage
-          v-if="currentPage === 'checkout'"
-          :items="[]"
-          key="checkout-top"
-          @back="goCart"
-        />
+    <LoginPage
+      v-if="showLogin"
+      @login-success="handleLoginSuccess"
+    />
 
-        <!-- Login modal can be shown regardless of login state (used for account/settings) -->
-        <LoginPage
-          v-if="showLogin"
-          @login-success="handleLoginSuccess"
-          key="login"
-        />
+    <router-view v-slot="{ Component }">
+      <transition name="fade" mode="out-in">
+        <component :is="Component" :key="$route.path" :user="loggedInUser" class="page-content" />
+      </transition>
+    </router-view>
 
-        <!-- If user not logged in: show landing/products/cart as before -->
-        <template v-if="!loggedInUser">
-          <LandingPage
-            v-if="currentPage === 'landing'"
-            @go-to-login="showLogin = true"
-            key="landing"
-          />
-          <ProductenOverzicht
-            v-if="currentPage === 'products'"
-            key="products"
-          />
-          <CartPage
-            v-if="currentPage === 'cart'"
-            key="cart"
-            @checkout="goCheckout"
-          />
-        </template>
-
-        <!-- If admin logged in (render only when currentPage is 'dashboard') -->
-        <Dashboard
-          v-else-if="loggedInUser && loggedInUser.is_admin && currentPage === 'dashboard'"
-          :user="loggedInUser"
-          key="dashboard"
-        />
-
-        <!-- If regular user logged in -->
-        <LandingPage
-          v-else-if="currentPage === 'landing'"
-          :user="loggedInUser"
-          key="user-landing"
-        />
-        <ProductenOverzicht
-          v-else-if="currentPage === 'products'"
-          :user="loggedInUser"
-          key="user-products"
-        />
-        <CartPage
-          v-else-if="currentPage === 'cart'"
-          :user="loggedInUser"
-          key="user-cart"
-          @checkout="goCheckout"
-        />
-      </div>
-    </transition>
-
-    <!-- Site Footer - always visible at bottom -->
     <SiteFooter />
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router'; // Import router hooks
 import LoginPage from './components/Login.vue';
 import SiteHeader from './components/Header.vue';
 import SiteFooter from './components/Footer.vue';
-import Dashboard from './components/Dashboard.vue';
-import LandingPage from './components/LandingPage.vue';
-import ProductenOverzicht from './components/ProductenOverzicht.vue';
-import CartPage from './components/Cart.vue';
-import CheckoutPage from './components/Checkout.vue';
 
 export default {
   name: 'App',
-  components: { LoginPage, SiteHeader, SiteFooter, Dashboard, LandingPage, ProductenOverzicht, CartPage, CheckoutPage },
+  components: { LoginPage, SiteHeader, SiteFooter },
   setup() {
     const loggedInUser = ref(null);
     const showLogin = ref(false);
-    const currentPage = ref('landing'); // Track which page to show
+    
+    const router = useRouter(); // Get access to the router instance
+    const route = useRoute();   // Get access to the current route info
 
     const checkLogin = () => {
       const userJson = localStorage.getItem('user');
@@ -101,52 +43,37 @@ export default {
     };
 
     const handleOpenLogin = () => {
-      // If admin is logged in, go to dashboard instead of showing login modal
       if (loggedInUser.value && loggedInUser.value.is_admin) {
-        showLogin.value = false;
-        currentPage.value = 'dashboard';
+        router.push('/dashboard'); 
         return;
       }
-      // Otherwise show login modal
       showLogin.value = true;
     };
 
     const handleLoginSuccess = () => {
       checkLogin();
       showLogin.value = false;
-      // If admin, go to dashboard; otherwise show landing
-      currentPage.value = (loggedInUser.value && loggedInUser.value.is_admin) ? 'dashboard' : 'landing';
+      if (loggedInUser.value && loggedInUser.value.is_admin) {
+        router.push('/dashboard');
+      } else {
+        router.push('/'); 
+      }
     };
-
-    const goHome = () => {
-      showLogin.value = false; // hide login modal if open
-      // Home button should always go to the landing page
-      currentPage.value = 'landing';
-    };
-
-    const goProducts = () => {
-      showLogin.value = false; // hide login modal if open
-      currentPage.value = 'products';
-    };
-
-    const goCart = () => {
-      showLogin.value = false;
-      currentPage.value = 'cart';
-    };
-
-    const goCheckout = () => {
-      showLogin.value = false;
-      currentPage.value = 'checkout'
-    }
 
     onMounted(() => {
       checkLogin();
-      if (loggedInUser.value && loggedInUser.value.is_admin) {
-        currentPage.value = 'dashboard';
-      }
+    });
+    
+    watch(() => route.path, () => {
+      showLogin.value = false;
     });
 
-    return { loggedInUser, showLogin, handleLoginSuccess, currentPage, goHome, goProducts, goCart, goCheckout, handleOpenLogin };
+    return { 
+      loggedInUser, 
+      showLogin, 
+      handleLoginSuccess, 
+      handleOpenLogin 
+    };
   },
 };
 </script>
@@ -157,7 +84,7 @@ export default {
   margin: 0;
   padding: 0;
   display: flex;
-  min-height: 100vh; /* ensure full viewport height */
+  min-height: 100vh;
   flex-direction: column;
 }
 
@@ -171,7 +98,6 @@ export default {
   opacity: 0;
 }
 
-/* make main content take remaining space so footer stays at bottom */
 .page-content {
   flex: 1 0 auto;
 }

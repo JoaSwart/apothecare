@@ -3,13 +3,13 @@
     <h2 class="logo">apothecare</h2>
 
     <nav>
-      <a href="#" @click.prevent="$emit('go-home')">Home</a>
-      <a href="#" @click.prevent="$emit('go-products')">Products</a>
-      <a href="#" @click.prevent="$emit('go-cart')">Cart</a>
+       <router-link to="/">Home</router-link>
+      <router-link to="/producten">Producten</router-link>
+      <router-link to="/cart">Cart</router-link>
     </nav>
 
     <div class="icons">
-      <!-- Search icon / input -->
+      <!-- Search icon -->
       <div v-if="isSearchVisible" class="search-container">
         <input type="text" placeholder="Search products..." />
         <i @click="toggleSearch" class="fa-solid fa-magnifying-glass"></i>
