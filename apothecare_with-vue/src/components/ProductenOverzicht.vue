@@ -89,6 +89,7 @@
 </template>
 
 <script>
+import useCart from "../store/cart";
 
 export default {
   name: "ProductenOverzicht",

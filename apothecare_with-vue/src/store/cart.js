@@ -7,7 +7,13 @@ const state = reactive({
 // 
 const saved = JSON.parse(localStorage.getItem('cart') || '[]')
 if (saved.length) {
-  state.items.splice(0, 0, ...saved)
+  // Normalize saved items: ensure price is a Number and qty is an integer
+  const normalized = saved.map(item => ({
+    ...item,
+    price: parsePrice(item.price),
+    qty: Number.isFinite(Number(item.qty)) ? parseInt(item.qty, 10) : (item.qty || 1)
+  }))
+  state.items.splice(0, 0, ...normalized)
 }
 
 function parsePrice(raw) {

@@ -1,10 +1,9 @@
-// src/router/index.js
-
 import { createRouter, createWebHistory } from 'vue-router';
 import LandingPage from '../components/LandingPage.vue';
 import ProductenOverzicht from '../components/ProductenOverzicht.vue'; 
 import Cart from '../components/Cart.vue';
 import Dashboard from '../components/Dashboard.vue'; 
+import LoginPage from '../components/Login.vue';
 
 const routes = [
   {
@@ -26,6 +25,11 @@ const routes = [
     path: '/dashboard', 
     name: 'Dashboard',
     component: Dashboard
+  },
+  {
+    path: '/login',        
+    name: 'Login',
+    component: LoginPage
   }
 ];
 
