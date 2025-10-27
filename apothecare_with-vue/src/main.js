@@ -1,4 +1,7 @@
-import { createApp } from 'vue'
-import App from './App.vue'
+import { createApp } from 'vue';
+import App from './App.vue';
+import '@fortawesome/fontawesome-free/css/all.css';
+// Add global styles/fonts if needed (e.g., import './style.css');
 
-createApp(App).mount('#app')
+const app = createApp(App);
+app.mount('#app');
