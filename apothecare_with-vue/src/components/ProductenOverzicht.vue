@@ -129,6 +129,7 @@ export default {
     };
   },
   mounted() {
+    this.searchTerm = this.$route.query.q ? String(this.$route.query.q) : '';
     this.fetchProducts();
   },
   computed: {
@@ -156,7 +157,6 @@ export default {
           const res = await fetch('http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/products.php?action=list', { method: 'GET' });
           const data = await res.json();
           if (data.success && Array.isArray(data.products)) {
-            // Map backend fields to UI fields expected by this component
             this.products = data.products.map(p => ({
               title: p.name || 'Onbekend',
               desc: p.category ? `${p.category}` : '',
@@ -187,11 +187,24 @@ export default {
         }
       }
     }
+    ,watch: {
+      // when searchTerm changes, update the URL query
+      searchTerm(newVal) {
+        const q = newVal ? String(newVal).trim() : undefined;
+        if ((this.$route.query.q || '') !== (q || '')) {
+          this.$router.replace({ name: 'Producten', query: q ? { q } : {} }).catch(() => {});
+        }
+      },
+      // when route changes, update searchTerm
+      '$route.query.q'(newQ) {
+        const q = newQ ? String(newQ) : '';
+        if (this.searchTerm !== q) this.searchTerm = q;
+      }
+    }
 };
 </script>
 
 <style scoped>
-/* Paste your entire CSS from style.css here */
 * {
   padding: 0;
   margin: 0;
@@ -219,7 +232,6 @@ body {
   display: flex;
   padding: 20px 0;
   width: 100%;
-  /* allow content to grow naturally so App-level footer is not overlapped */
   min-height: 0;
 }
 
@@ -260,7 +272,6 @@ body {
   background-color: #f9fafb;
 }
 #zoekveld:focus {
-  /* lichtgrijs randje ipv felblauw */
   outline: 2px solid #aaa;
 }
 

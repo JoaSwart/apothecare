@@ -14,12 +14,12 @@
             </h1>
             <p class="subtitle">Uw betrouwbare online drogisterij & apotheek voor medicijnen, vitamines en verzorging</p>
             
-            <div class="search-bar-wrapper">
-                <input type="text" placeholder="Zoek op medicijn, klacht, product, merknaam...">
-                <button>
+            <form class="search-bar-wrapper" @submit.prevent="goToProducts">
+                <input v-model="searchQuery" type="text" placeholder="Zoek op medicijn, klacht, product, merknaam...">
+                <button type="submit">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
-            </div>
+            </form>
         </div>
       </section>
 
@@ -141,21 +141,21 @@
                 <p class="subtitle" style="margin-bottom: 40px;">Ontdek ons uitgebreide assortiment</p>
                 
                 <div class="category-grid">
-                    <router-link to="/producten" class="category-card" style="background-image: url('../assets/supplementen.jpg');">
+                    <router-link to="/producten" class="category-card" :style="{ backgroundImage: 'url(' + require('../assets/supplementen.jpg') + ')' }">
                         <div class="card-overlay">
                             <h3>Vitamines & Supplementen</h3>
                             <p>Voor optimale gezondheid</p>
                             <span>Bekijk producten &rarr;</span>
                         </div>
                     </router-link>
-                     <router-link to="/producten" class="category-card" style="background-image: url('../assets/kruidentheendranken.jpg');">
+                     <router-link to="/producten" class="category-card" :style="{ backgroundImage: 'url(' + require('../assets/kruidentheendranken.jpg') + ')' }">
                         <div class="card-overlay">
                             <h3>Kruidenthee & Dranken</h3>
                             <p>Natuurlijke ontspanning</p>
                             <span>Bekijk producten &rarr;</span>
                         </div>
                     </router-link>
-                      <router-link to="/producten" class="category-card" style="background-image: url('../assets/aromatherapie.jpg');">
+                      <router-link to="/producten" class="category-card" :style="{ backgroundImage: 'url(' + require('../assets/aromatherapie.jpg') + ')' }">
                         <div class="card-overlay">
                             <h3>Aromatherapy & Oliën</h3>
                             <p>Voor lichaam en geest</p>
@@ -173,6 +173,7 @@
 
 <script>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import ChatWidget from './ChatWidget.vue'; 
 
 export default {
@@ -238,13 +239,23 @@ export default {
         window.removeEventListener('resize', handleResize);
     });
 
-    return {
-      track,
-      nextButton,
-      prevButton,
-      nextSlide,
-      prevSlide
-    };
+        // landingpage search
+        const router = useRouter();
+        const searchQuery = ref('');
+        function goToProducts() {
+            const q = searchQuery.value ? String(searchQuery.value).trim() : '';
+            router.push({ name: 'Producten', query: q ? { q } : {} });
+        }
+
+        return {
+            track,
+            nextButton,
+            prevButton,
+            nextSlide,
+            prevSlide,
+            searchQuery,
+            goToProducts
+        };
   }
 };
 </script>
