@@ -1,14 +1,6 @@
-
 <template>
   <div id="app">
-    <SiteHeader 
-      @open-login="handleOpenLogin"
-    />
-
-    <LoginPage
-      v-if="showLogin"
-      @login-success="handleLoginSuccess"
-    />
+    <SiteHeader @open-login="handleOpenLogin" />
 
     <router-view v-slot="{ Component }">
       <transition name="fade" mode="out-in">
@@ -21,21 +13,17 @@
 </template>
 
 <script>
-import { ref, onMounted, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router'; // Import router hooks
-import LoginPage from './components/Login.vue';
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import SiteHeader from './components/Header.vue';
 import SiteFooter from './components/Footer.vue';
 
 export default {
   name: 'App',
-  components: { LoginPage, SiteHeader, SiteFooter },
+  components: { SiteHeader, SiteFooter },
   setup() {
     const loggedInUser = ref(null);
-    const showLogin = ref(false);
-    
-    const router = useRouter(); // Get access to the router instance
-    const route = useRoute();   // Get access to the current route info
+    const router = useRouter();
 
     const checkLogin = () => {
       const userJson = localStorage.getItem('user');
@@ -44,36 +32,17 @@ export default {
 
     const handleOpenLogin = () => {
       if (loggedInUser.value && loggedInUser.value.is_admin) {
-        router.push('/dashboard'); 
+        router.push('/dashboard');
         return;
       }
-      showLogin.value = true;
-    };
-
-    const handleLoginSuccess = () => {
-      checkLogin();
-      showLogin.value = false;
-      if (loggedInUser.value && loggedInUser.value.is_admin) {
-        router.push('/dashboard');
-      } else {
-        router.push('/'); 
-      }
+      router.push('/login'); // navigate to login page
     };
 
     onMounted(() => {
       checkLogin();
     });
-    
-    watch(() => route.path, () => {
-      showLogin.value = false;
-    });
 
-    return { 
-      loggedInUser, 
-      showLogin, 
-      handleLoginSuccess, 
-      handleOpenLogin 
-    };
+    return { loggedInUser, handleOpenLogin };
   },
 };
 </script>

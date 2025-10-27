@@ -1,8 +1,20 @@
-import { reactive, computed } from 'vue'
+import { reactive, computed, watch} from 'vue'
 
 const state = reactive({
   items: []
 })
+
+// 
+const saved = JSON.parse(localStorage.getItem('cart') || '[]')
+if (saved.length) {
+  // Normalize saved items: ensure price is a Number and qty is an integer
+  const normalized = saved.map(item => ({
+    ...item,
+    price: parsePrice(item.price),
+    qty: Number.isFinite(Number(item.qty)) ? parseInt(item.qty, 10) : (item.qty || 1)
+  }))
+  state.items.splice(0, 0, ...normalized)
+}
 
 function parsePrice(raw) {
   if (raw == null) return 0
@@ -46,6 +58,11 @@ function decrement(index) {
 function clear() { state.items.splice(0) }
 
 const subtotal = computed(() => state.items.reduce((s, it) => s + it.price * it.qty, 0))
+
+// kijkt voor wijzigingen in de winkelwagen en slaat deze op in localStorage
+watch(state.items, (newItems) => {
+  localStorage.setItem('cart', JSON.stringify(newItems))
+}, { deep: true })
 
 export default function useCart() {
   return {
