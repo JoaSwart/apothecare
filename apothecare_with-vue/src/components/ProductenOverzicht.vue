@@ -1,5 +1,8 @@
 <template>
   <div>
+    <div v-if="showAdded" class="added-notification">
+      {{ addedMessage }}
+    </div>
     <main>
       <div class="top-products">
         <h3>Producten</h3>
@@ -83,11 +86,13 @@
       </section>
     </main>
 
-  <!-- Footer is rendered in App.vue; don't duplicate -->
+    <!-- Footer is rendered in App.vue; don't duplicate -->
   </div>
 </template>
 
 <script>
+import useCart from "../store/cart";
+
 export default {
   name: "ProductenOverzicht",
   data() {
@@ -126,6 +131,8 @@ export default {
         { value: "Vermoeidheid", label: "Vermoeidheid" },
       ],
       products: [],
+      showAdded: false,
+      addedMessage: "",
     };
   },
   mounted() {
@@ -150,43 +157,54 @@ export default {
       });
     },
   },
-    methods: {
-      async fetchProducts() {
-        try {
-          const res = await fetch('http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/products.php?action=list', { method: 'GET' });
-          const data = await res.json();
-          if (data.success && Array.isArray(data.products)) {
-            // Map backend fields to UI fields expected by this component
-            this.products = data.products.map(p => ({
-              title: p.name || 'Onbekend',
-              desc: p.category ? `${p.category}` : '',
-              img: p.image_url ? p.image_url : '../../assets/img/placeholder.png',
-              prijs: p.price ? String(p.price) : '',
-              categorie: p.category || '',
-              klachten: [],
-              weight: p.grams ? `${p.grams}g` : '',
-              price: p.price ? `€${parseFloat(p.price).toFixed(2)}` : '',
-            }));
-          } else {
-            console.warn('No products returned from API', data);
-          }
-        } catch (err) {
-          console.error('Error fetching products', err);
+  methods: {
+    async fetchProducts() {
+      try {
+        const res = await fetch(
+          "http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/products.php?action=list",
+          { method: "GET" }
+        );
+        const data = await res.json();
+        if (data.success && Array.isArray(data.products)) {
+          // Map backend fields to UI fields expected by this component
+          this.products = data.products.map((p) => ({
+            id: p.id || Date.now() + Math.random(),
+            title: p.name || "Onbekend",
+            desc: p.category ? `${p.category}` : "",
+            img: p.image_url ? p.image_url : "../../assets/img/placeholder.png",
+            prijs: p.price ? String(p.price) : "",
+            categorie: p.category || "",
+            klachten: [],
+            weight: p.grams ? `${p.grams}g` : "",
+            price: p.price ? parseFloat(p.price) : 0,
+          }));
+        } else {
+          console.warn("No products returned from API", data);
         }
-      },
-
-      addToCart(product) {
-        try {
-          const cartJson = localStorage.getItem('cart');
-          const cart = cartJson ? JSON.parse(cartJson) : [];
-          cart.push({ title: product.title, price: product.price || product.price, qty: 1 });
-          localStorage.setItem('cart', JSON.stringify(cart));
-          alert(`${product.title} toegevoegd aan winkelwagen`);
-        } catch (err) {
-          console.error('Failed to add to cart', err);
-        }
+      } catch (err) {
+        console.error("Error fetching products", err);
       }
-    }
+    },
+
+    addToCart(product) {
+      const cart = useCart();
+      cart.addItem({
+        id: product.id || Date.now() + Math.random(),
+        title: product.title,
+        price: product.price || parseFloat(product.prijs || 0),
+        img: product.img || product.image || "",
+        sizes: product.sizes || [],
+        size: product.size || (product.sizes ? product.sizes[0] : ""),
+        qty: 1,
+      });
+      this.addedMessage = `${product.title} is toegevoegd aan je winkelmandje.`;
+      this.showAdded = true;
+
+      setTimeout(() => {
+        this.showAdded = false;
+      }, 3500);
+    },
+  },
 };
 </script>
 
@@ -201,7 +219,6 @@ export default {
 body {
   font-family: sans-serif;
 }
-
 
 .footer-title {
   font-size: 18px;
@@ -478,5 +495,38 @@ hr {
 
 .padding {
   padding: 10px 20px;
+}
+
+.added-notification {
+  position: fixed;
+  z-index: 1000;
+  top: 20px;
+  right: 20px;
+  background: #2d7a4f;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  opacity: 0;
+  animation: slideIn 0.3s forwards, fadeOut 0.3s 1.7s forwards;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 </style>
