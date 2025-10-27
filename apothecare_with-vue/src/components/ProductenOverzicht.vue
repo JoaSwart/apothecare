@@ -194,10 +194,9 @@ export default {
     },
     addToCart(product) {
       try {
-        const cartJson = localStorage.getItem('cart');
-        const cart = cartJson ? JSON.parse(cartJson) : [];
-        cart.push({ title: product.title, price: product.price || product.price, qty: 1 });
-        localStorage.setItem('cart', JSON.stringify(cart));
+        // use the central cart store so the rest of the app stays in sync
+        const cart = useCart();
+        cart.addItem(product);
         alert(`${product.title} toegevoegd aan winkelwagen`);
       } catch (err) {
         console.error('Failed to add to cart', err);

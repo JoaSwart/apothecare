@@ -3,9 +3,13 @@
     <main class="container">
       <h2 class="page-title">Webshop Dashboard</h2>
 
-      <!-- Add logout button here (quick placement) -->
-      <button @click="handleLogout" style="margin: 10px; padding: 8px; background: red; color: white; border: none; border-radius: 4px; cursor: pointer;">Uitloggen</button>
+      <!-- Logout button -->
+      <button @click="handleLogout"
+        style="margin: 10px; padding: 8px; background: red; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        Uitloggen
+      </button>
 
+      <!-- Metrics -->
       <section class="metrics">
         <div class="stat-card">
           <div class="stat-icon">↗</div>
@@ -33,24 +37,21 @@
         </div>
       </section>
 
+      <!-- Navigation -->
       <nav class="segmented">
-        <button :class="['seg-btn', active === 'bestellingen' ? 'active' : '']" @click="active='bestellingen'">Bestellingen</button>
-        <button :class="['seg-btn', active === 'producten' ? 'active' : '']" @click="setActiveAndFetch('producten')">Producten</button>
-        <button :class="['seg-btn', active === 'klanten' ? 'active' : '']" @click="active='klanten'">Klanten</button>
-        <input 
-          type="text" 
-          placeholder="Zoek op naam of categorie..." 
-          class="search-input" 
-          v-model="searchQuery"
-          @input="filterProducts"
-          @keyup.enter="filterProducts"
-        />
+        <button :class="['seg-btn', active === 'bestellingen' ? 'active' : '']"
+          @click="setActiveAndFetch('bestellingen')">Bestellingen</button>
+        <button :class="['seg-btn', active === 'producten' ? 'active' : '']"
+          @click="setActiveAndFetch('producten')">Producten</button>
+        <button :class="['seg-btn', active === 'klanten' ? 'active' : '']"
+          @click="setActiveAndFetch('klanten')">Gebruikers</button>
+        <input type="text" placeholder="Zoek op naam of categorie..." class="search-input" v-model="searchQuery"
+          @input="filterProducts" @keyup.enter="filterProducts" />
       </nav>
 
-      <!-- Bestellingen section -->
+      <!-- Bestellingen -->
       <section class="panel" v-if="active === 'bestellingen'">
         <h3 class="panel-title">Bestellingen Overzicht</h3>
-
         <div class="table-wrap">
           <table class="orders-table">
             <thead>
@@ -61,6 +62,7 @@
                 <th>Items</th>
                 <th>Datum</th>
                 <th>Status</th>
+                <th>Betaald Bedrag</th>
                 <th>Acties</th>
               </tr>
             </thead>
@@ -72,23 +74,22 @@
                 <td class="center">{{ order.items }}</td>
                 <td>{{ order.date }}</td>
                 <td><span :class="['badge', order.statusClass]">{{ order.status }}</span></td>
+                <td>€{{ Number(order.betaaldBedrag).toFixed(2) }}</td>
                 <td><a href="#" @click.prevent="view(order)">Bekijken</a></td>
+              </tr>
+              <tr v-if="orders.length === 0">
+                <td colspan="8" class="center">Geen bestellingen gevonden.</td>
               </tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- Producten section -->
+      <!-- Producten -->
       <section class="panel" v-if="active === 'producten'">
         <h3 class="panel-title">Producten Overzicht</h3>
-
-        <!-- Add product button -->
         <button @click="openAddModal" class="btn-add">+ Product toevoegen</button>
-
-        <!-- Loading indicator -->
         <p v-if="loadingProducts">Laden producten...</p>
-
         <div class="table-wrap" v-if="!loadingProducts">
           <table class="orders-table">
             <thead>
@@ -107,16 +108,14 @@
                 <td>{{ product.category }}</td>
                 <td>€{{ Number(product.price).toFixed(2) }}</td>
                 <td>{{ product.grams }}g</td>
-                <td>
-                  <img :src="product.image_url" alt="Product afbeelding" style="width: 50px; height: auto;" />
-                </td>
+                <td><img :src="product.image_url" alt="Product afbeelding" style="width:50px;height:auto" /></td>
                 <td>
                   <a href="#" @click.prevent="openEditModal(product)">Bewerken</a> |
                   <a href="#" @click.prevent="deleteProduct(product)">Verwijderen</a>
                 </td>
               </tr>
               <tr v-if="filteredProducts.length === 0">
-                <td colspan="6">
+                <td colspan="6" class="center">
                   {{ searchQuery ? 'Geen producten gevonden voor "' + searchQuery + '"' : 'Geen producten gevonden in de database.' }}
                 </td>
               </tr>
@@ -125,10 +124,9 @@
         </div>
       </section>
 
-      <!-- Klanten section -->
+      <!-- Users -->
       <section class="panel" v-if="active === 'klanten'">
-        <h3 class="panel-title">Klanten Overzicht</h3>
-
+        <h3 class="panel-title">Gebruikers Overzicht</h3>
         <div class="table-wrap">
           <table class="orders-table">
             <thead>
@@ -143,17 +141,20 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="klant in klantenList" :key="klant.id">
-                <td>{{ '#' + klant.id }}</td>
-                <td>{{ klant.naam }}</td>
-                <td>{{ klant.email }}</td>
-                <td>{{ klant.telefoon || 'N/A' }}</td>
-                <td>{{ klant.registratiedatum }}</td>
-                <td class="center">{{ klant.bestellingen }}</td>
+              <tr v-for="user in usersList" :key="user.user_id">
+                <td>{{ '#' + user.user_id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.phone || 'N/A' }}</td>
+                <td>{{ new Date(user.registration_date).toLocaleDateString() }}</td>
+                <td class="center">{{ user.total_orders }}</td>
                 <td>
-                  <a href="#" @click.prevent="editKlant(klant)">Bewerken</a> |
-                  <a href="#" @click.prevent="deleteKlant(klant)">Verwijderen</a>
+                  <a href="#" @click.prevent="openUserModal(user)">Bewerken</a> |
+                  <a href="#" @click.prevent="deleteUser(user)">Verwijderen</a>
                 </td>
+              </tr>
+              <tr v-if="usersList.length === 0">
+                <td colspan="7" class="center">Geen gebruikers gevonden.</td>
               </tr>
             </tbody>
           </table>
@@ -167,22 +168,36 @@
           <form @submit.prevent="saveProduct">
             <label>Naam:</label>
             <input v-model="modalForm.name" required />
-
             <label>Categorie:</label>
             <input v-model="modalForm.category" required />
-
             <label>Prijs (€):</label>
             <input type="number" step="0.01" v-model.number="modalForm.price" required />
-
             <label>Gram (g):</label>
             <input type="number" v-model.number="modalForm.grams" required />
-
             <label>Afbeelding URL:</label>
             <input v-model="modalForm.image_url" required />
-
             <div class="modal-actions">
               <button type="submit">{{ isEditMode ? 'Bijwerken' : 'Toevoegen' }}</button>
               <button type="button" @click="closeModal">Annuleren</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Modal for Edit/Add User -->
+      <div v-if="showUserModal" class="modal-overlay" @click="closeUserModal">
+        <div class="modal-content" @click.stop>
+          <h3>{{ isEditUser ? 'Gebruiker Bewerken' : 'Nieuwe Gebruiker' }}</h3>
+          <form @submit.prevent="saveUser">
+            <label>Naam:</label>
+            <input v-model="userForm.username" required />
+            <label>E-mail:</label>
+            <input type="email" v-model="userForm.email" required />
+            <label>Telefoon:</label>
+            <input v-model="userForm.phone" />
+            <div class="modal-actions">
+              <button type="submit">{{ isEditUser ? 'Bijwerken' : 'Toevoegen' }}</button>
+              <button type="button" @click="closeUserModal">Annuleren</button>
             </div>
           </form>
         </div>
@@ -193,7 +208,7 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'; // Add computed for filteredProducts
+import { ref, computed, onMounted } from 'vue';
 
 export default {
   name: 'DashBoard',
@@ -203,63 +218,47 @@ export default {
     const products = ref(0);
     const active = ref('bestellingen');
     const loadingProducts = ref(false);
-    const searchQuery = ref(''); 
+    const searchQuery = ref('');
 
-    const orders = ref([
-      { id:1, name:'Jan de Vries', contact:'jan@email.com', items:3, date:'14 okt 2025', status:'Voltooid', statusClass:'voltooid' },
-      { id:2, name:'Maria Bakker', contact:'maria@email.com', items:1, date:'13 okt 2025', status:'In behandeling', statusClass:'inbehandeling' },
-      { id:3, name:'Piet Jansen', contact:'piet@email.com', items:5, date:'12 okt 2025', status:'In afwachting', statusClass:'inafwachting' },
-    ]);
-
+    const orders = ref([]);
     const productsList = ref([]);
+    const usersList = ref([]);
 
-    const klantenList = ref([
-      { id: 1, naam: 'Jan de Vries', email: 'jan@email.com', telefoon: '06-12345678', registratiedatum: '12 okt 2025', bestellingen: 3 },
-      { id: 2, naam: 'Maria Bakker', email: 'maria@email.com', telefoon: '06-87654321', registratiedatum: '10 okt 2025', bestellingen: 1 },
-      { id: 3, naam: 'Piet Jansen', email: 'piet@email.com', telefoon: '', registratiedatum: '08 okt 2025', bestellingen: 5 },
-    ]);
+    const showModal = ref(false);
+    const isEditMode = ref(false);
+    const modalForm = ref({ product_id: null, name: '', category: '', price: 0, grams: 0, image_url: '' });
 
-    totalOrders.value = orders.value.length;
+    // Users modal
+    const showUserModal = ref(false);
+    const userForm = ref({ user_id: null, username: '', email: '', phone: '' });
+    const isEditUser = ref(false);
 
     const baseUrl = 'http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/';
 
-    // Modal state
-    const showModal = ref(false);
-    const isEditMode = ref(false);
-    const modalForm = ref({
-      product_id: null,
-      name: '',
-      category: '',
-      price: 0,
-      grams: 0,
-      image_url: ''
-    });
-
-    // Computed for filtered products based on search
-    const filteredProducts = computed(() => {
-      if (!searchQuery.value.trim()) {
-        return productsList.value;
-      }
-      const query = searchQuery.value.toLowerCase().trim();
-      return productsList.value.filter(product => 
-        product.name.toLowerCase().includes(query) || 
-        product.category.toLowerCase().includes(query)
-      );
-    });
-
-    // Helper to set active and fetch
-    function setActiveAndFetch(tab) {
-      active.value = tab;
-      if (tab === 'producten') {
-        fetchProducts();
+    // -------------------- FETCH FUNCTIONS --------------------
+    async function fetchOrders() {
+      try {
+        const res = await fetch(baseUrl + 'orders.php?action=list');
+        const data = await res.json();
+        if (data.success) {
+          orders.value = data.orders.map(o => ({ ...o, betaaldBedrag: parseFloat(o.betaaldBedrag) }));
+          totalOrders.value = orders.value.length;
+        } else {
+          orders.value = [];
+          totalOrders.value = 0;
+          alert('Fout bij ophalen bestellingen: ' + (data.message || ''));
+        }
+      } catch (err) {
+        console.error('Netwerkfout bij ophalen bestellingen:', err);
+        orders.value = [];
+        totalOrders.value = 0;
       }
     }
 
-    // Fetch products
     async function fetchProducts() {
       loadingProducts.value = true;
       try {
-        const res = await fetch(baseUrl + 'products.php?action=list', { method: 'GET' });
+        const res = await fetch(baseUrl + 'products.php?action=list');
         const data = await res.json();
         if (data.success) {
           productsList.value = data.products.map(p => ({
@@ -269,7 +268,6 @@ export default {
           }));
           products.value = productsList.value.length;
         } else {
-          alert('Fout bij ophalen: ' + (data.message || ''));
           productsList.value = [];
           products.value = 0;
         }
@@ -280,38 +278,40 @@ export default {
       }
     }
 
-    // Filter products on search input
-    function filterProducts() {
-      console.log('Searching for:', searchQuery.value);
+    async function fetchUsers() {
+      try {
+        const res = await fetch(baseUrl + 'users.php');
+        const data = await res.json();
+        if (data.success) usersList.value = data.users;
+        else usersList.value = [];
+      } catch (err) {
+        console.error('Fout bij ophalen van gebruikers:', err);
+        usersList.value = [];
+      }
     }
 
-    // Open modal for add
+    // -------------------- ORDERS --------------------
+    function view(order) {
+      alert(`Bekijk bestelling #${order.id}\nNaam: ${order.name}\nBetaald: €${order.betaaldBedrag.toFixed(2)}`);
+    }
+
+    // -------------------- PRODUCTS --------------------
+    function filterProducts() {
+      console.log('Zoeken:', searchQuery.value);
+    }
+
     function openAddModal() {
       isEditMode.value = false;
       modalForm.value = { product_id: null, name: '', category: '', price: 0, grams: 0, image_url: '' };
       showModal.value = true;
     }
-
-    // Open modal for edit
     function openEditModal(product) {
       isEditMode.value = true;
-      modalForm.value = {
-        product_id: product.product_id,
-        name: product.name,
-        category: product.category,
-        price: product.price,
-        grams: product.grams,
-        image_url: product.image_url
-      };
+      modalForm.value = { ...product };
       showModal.value = true;
     }
+    function closeModal() { showModal.value = false; }
 
-    // Close modal
-    function closeModal() {
-      showModal.value = false;
-    }
-
-    // Save 
     async function saveProduct() {
       const formData = new URLSearchParams();
       formData.append('action', isEditMode.value ? 'update' : 'add');
@@ -323,59 +323,112 @@ export default {
       if (isEditMode.value) formData.append('product_id', modalForm.value.product_id);
 
       try {
-        const res = await fetch(baseUrl + 'products.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData
-        });
+        const res = await fetch(baseUrl + 'products.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData });
+        const data = await res.json();
+        if (data.success) { alert(data.message); closeModal(); fetchProducts(); }
+        else alert('Fout: ' + data.message);
+      } catch (err) { alert('Netwerkfout: ' + err.message); }
+    }
+
+    async function deleteProduct(product) {
+      if (!confirm(`Weet je zeker dat je product "${product.name}" wilt verwijderen?`)) return;
+      const formData = new URLSearchParams(); 
+      formData.append('action', 'delete'); 
+      formData.append('product_id', product.product_id);
+      try {
+        const res = await fetch(baseUrl + 'products.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData });
+        const data = await res.json();
+        if (data.success) { alert(data.message); fetchProducts(); }
+        else alert('Fout bij verwijderen: ' + data.message);
+      } catch (err) { alert('Netwerkfout: ' + err.message); }
+    }
+
+    // -------------------- USERS --------------------
+    function openUserModal(user = null) {
+      if (user) {
+        isEditUser.value = true;
+        userForm.value = { ...user };
+      } else {
+        isEditUser.value = false;
+        userForm.value = { user_id: null, username: '', email: '', phone: '' };
+      }
+      showUserModal.value = true;
+    }
+    function closeUserModal() { showUserModal.value = false; }
+
+    async function saveUser() {
+      const formData = new URLSearchParams();
+      formData.append('action', 'update');
+      formData.append('user_id', userForm.value.user_id);
+      formData.append('username', userForm.value.username);
+      formData.append('email', userForm.value.email);
+      formData.append('phone', userForm.value.phone || '');
+
+      try {
+        const res = await fetch(baseUrl + 'users.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData });
         const data = await res.json();
         if (data.success) {
           alert(data.message);
-          closeModal();
-          fetchProducts(); // Refresh list
-        } else {
-          alert('Fout: ' + data.message);
-        }
+          closeUserModal();
+          fetchUsers();
+        } else alert('Fout bij bijwerken: ' + data.message);
       } catch (err) {
         alert('Netwerkfout: ' + err.message);
       }
     }
 
-    // Delete product 
-    async function deleteProduct(product) {
-      if (confirm(`Weet je zeker dat je product "${product.name}" wilt verwijderen?`)) {
-        const formData = new URLSearchParams();
-        formData.append('action', 'delete');
-        formData.append('product_id', product.product_id);
+    async function deleteUser(user) {
+      if (!confirm(`Weet je zeker dat je gebruiker "${user.username}" wilt verwijderen?`)) return;
 
-        try {
-          const res = await fetch(baseUrl + 'products.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData
-          });
-          const data = await res.json();
-          if (data.success) {
-            alert(data.message);
-            fetchProducts(); // Refresh list after delete
-          } else {
-            alert('Fout bij verwijderen: ' + data.message);
-          }
-        } catch (err) {
-          alert('Netwerkfout: ' + err.message);
-        }
+      const formData = new URLSearchParams();
+      formData.append('action', 'delete');
+      formData.append('user_id', user.user_id);
+
+      try {
+        const res = await fetch(baseUrl + 'users.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData });
+        const data = await res.json();
+        if (data.success) {
+          alert(data.message);
+          usersList.value = usersList.value.filter(u => u.user_id !== user.user_id);
+        } else alert('Fout bij verwijderen: ' + data.message);
+      } catch (err) {
+        alert('Netwerkfout: ' + err.message);
       }
     }
 
-    function view(order) { alert('Bekijk #' + order.id); }
-    function editKlant(klant) { alert('Bewerk #' + klant.id); }
-    function deleteKlant(klant) { if (confirm('Verwijderen?')) klantenList.value = klantenList.value.filter(k => k.id !== klant.id); }
-    function handleLogout() { localStorage.removeItem('user'); alert('Uitgelogd!'); window.location.reload(); }
+    // -------------------- NAVIGATION --------------------
+    function setActiveAndFetch(tab) {
+      active.value = tab;
+      if (tab === 'bestellingen') fetchOrders();
+      if (tab === 'producten') fetchProducts();
+      if (tab === 'klanten') fetchUsers();
+    }
 
-    return { 
-      omzet, totalOrders, products, orders, view, active, 
+    function handleLogout() {
+      localStorage.removeItem('user');
+      alert('Uitgelogd!');
+      window.location.reload();
+    }
+
+    const filteredProducts = computed(() => {
+      if (!searchQuery.value.trim()) return productsList.value;
+      const query = searchQuery.value.toLowerCase().trim();
+      return productsList.value.filter(p =>
+        p.name.toLowerCase().includes(query) || p.category.toLowerCase().includes(query)
+      );
+    });
+
+    // -------------------- MOUNT --------------------
+    onMounted(() => {
+      fetchOrders();
+      fetchProducts();
+      fetchUsers();
+    });
+
+    return {
+      omzet, totalOrders, products, orders, view, active,
       productsList, filteredProducts, searchQuery, loadingProducts,
-      klantenList, editKlant, deleteKlant,
+      usersList, openUserModal, deleteUser, userForm, showUserModal, isEditUser, saveUser, closeUserModal,
       handleLogout, setActiveAndFetch,
       showModal, openAddModal, openEditModal, closeModal, saveProduct, modalForm, isEditMode,
       deleteProduct, filterProducts
@@ -384,65 +437,214 @@ export default {
 }
 </script>
 
+
+
+
+
 <style scoped>
-:root{
-  --bg:#fafafa;
-  --card-bg:#fff;
-  --muted:#6b7280;
-  --accent:#111827;
-  --green:#dff3e8;
-  --yellow:#fff7d6;
+:root {
+  --bg: #fafafa;
+  --card-bg: #fff;
+  --muted: #6b7280;
+  --accent: #111827;
+  --green: #dff3e8;
+  --yellow: #fff7d6;
 }
 
-html,body{height:100%;}
-.page-bg{min-height:100vh; background:var(--bg); font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;}
-.container{ max-width:980px; margin:36px auto; padding:0 16px; }
-.page-title{ font-size:13px; color:#374151; margin-bottom:18px; }
+html,
+body {
+  height: 100%;
+}
 
-.metrics{ display:flex; gap:18px; margin-bottom:18px; }
-.stat-card{ background:var(--card-bg); border:1px solid rgba(16,24,40,0.04); border-radius:10px; padding:18px; display:flex; gap:12px; align-items:center; flex:1; }
-.stat-icon{ width:44px; height:44px; background:#eef7f0; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--accent); }
-.stat-body{ text-align:left; }
-.stat-label{ font-size:12px; color:var(--muted); }
-.stat-value{ font-size:22px; color:#111827; margin-top:4px; }
-.stat-sub{ font-size:11px; color:var(--muted); margin-top:2px; }
+.page-bg {
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
+}
 
-.segmented{ margin:18px 0; display: flex; align-items: center; }
-.seg-btn{ border-radius:8px; border:1px solid rgba(16,24,40,0.06); padding:8px 14px; background:#fff; margin-right:8px; cursor:pointer; }
-.seg-btn.active{ background:#0f172a; color:#fff; }
-.search-input { 
-  margin-left: auto; 
-  padding: 8px; 
-  border: 1px solid rgba(16,24,40,0.06); 
-  border-radius: 8px; 
+.container {
+  max-width: 980px;
+  margin: 36px auto;
+  padding: 0 16px;
+}
+
+.page-title {
+  font-size: 13px;
+  color: #374151;
+  margin-bottom: 18px;
+}
+
+.metrics {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid rgba(16, 24, 40, 0.04);
+  border-radius: 10px;
+  padding: 18px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex: 1;
+}
+
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  background: #eef7f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--accent);
+}
+
+.stat-body {
+  text-align: left;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.stat-value {
+  font-size: 22px;
+  color: #111827;
+  margin-top: 4px;
+}
+
+.stat-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.segmented {
+  margin: 18px 0;
+  display: flex;
+  align-items: center;
+}
+
+.seg-btn {
+  border-radius: 8px;
+  border: 1px solid rgba(16, 24, 40, 0.06);
+  padding: 8px 14px;
+  background: #fff;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.seg-btn.active {
+  background: #0f172a;
+  color: #fff;
+}
+
+.search-input {
+  margin-left: auto;
+  padding: 8px;
+  border: 1px solid rgba(16, 24, 40, 0.06);
+  border-radius: 8px;
   min-width: 200px;
 }
 
-.panel{ background:transparent; }
-.panel-title{ background:var(--card-bg); padding:16px 18px; border-radius:10px 10px 0 0; border:1px solid rgba(16,24,40,0.04); margin:0 0 0; }
-.table-wrap{ border:1px solid rgba(16,24,40,0.04); border-top:0; border-radius:0 0 10px 10px; overflow:hidden; }
-.orders-table{ width:100%; border-collapse:collapse; background:#fff; }
-.orders-table th, .orders-table td{ padding:14px 18px; text-align:left; font-size:13px; border-top:1px solid rgba(15,23,42,0.03); }
-.orders-table thead th{ border-top:0; color:#374151; }
-.orders-table tbody tr td.center{ text-align:center; }
+.panel {
+  background: transparent;
+}
 
-.badge{ padding:6px 10px; border-radius:999px; font-size:12px; display:inline-block; }
-.badge.voltooid{ background:#e6f5ea; color:#047857; }
-.badge.inbehandeling{ background:#eef2ff; color:#3730a3; }
-.badge.inafwachting{ background:#fff7d6; color:#92400e; }
+.panel-title {
+  background: var(--card-bg);
+  padding: 16px 18px;
+  border-radius: 10px 10px 0 0;
+  border: 1px solid rgba(16, 24, 40, 0.04);
+  margin: 0 0 0;
+}
 
-.orders-table a{ color:#111827; text-decoration:none; }
+.table-wrap {
+  border: 1px solid rgba(16, 24, 40, 0.04);
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  overflow: hidden;
+}
 
-.btn-add { margin-bottom: 16px; padding: 8px 14px; background: #0f172a; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.orders-table th,
+.orders-table td {
+  padding: 14px 18px;
+  text-align: left;
+  font-size: 13px;
+  border-top: 1px solid rgba(15, 23, 42, 0.03);
+}
+
+.orders-table thead th {
+  border-top: 0;
+  color: #374151;
+}
+
+.orders-table tbody tr td.center {
+  text-align: center;
+}
+
+.badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  display: inline-block;
+}
+
+.badge.voltooid {
+  background: #e6f5ea;
+  color: #047857;
+}
+
+.badge.inbehandeling {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.badge.inafwachting {
+  background: #fff7d6;
+  color: #92400e;
+}
+
+.orders-table a {
+  color: #111827;
+  text-decoration: none;
+}
+
+.btn-add {
+  margin-bottom: 16px;
+  padding: 8px 14px;
+  background: #0f172a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
 
 /* Modal styles */
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
-  display: flex; align-items: center; justify-content: center;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 1000;
 }
+
 .modal-content {
   background: white;
   padding: 20px;
@@ -450,14 +652,41 @@ html,body{height:100%;}
   width: 400px;
   max-width: 90%;
 }
-.modal-content h3 { margin-top: 0; }
-.modal-content label { display: block; margin: 10px 0 5px; font-weight: bold; }
+
+.modal-content h3 {
+  margin-top: 0;
+}
+
+.modal-content label {
+  display: block;
+  margin: 10px 0 5px;
+  font-weight: bold;
+}
+
 .modal-content input {
-  width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
-.modal-actions { margin-top: 20px; display: flex; gap: 10px; }
+
+.modal-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
 .modal-actions button {
-  padding: 8px 16px; background: #0f172a; color: white; border: none; border-radius: 4px; cursor: pointer;
+  padding: 8px 16px;
+  background: #0f172a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
-.modal-actions button[type="button"] { background: #ccc; color: black; }
+
+.modal-actions button[type="button"] {
+  background: #ccc;
+  color: black;
+}
 </style>
