@@ -85,8 +85,6 @@
         </article>
       </section>
     </main>
-
-    <!-- Footer is rendered in App.vue; don't duplicate -->
   </div>
 </template>
 
@@ -141,70 +139,71 @@ export default {
   computed: {
     filteredProducts() {
       return this.products.filter((p) => {
-        const matchPrijs = this.selectedPrijs.length
-          ? this.selectedPrijs.includes(p.prijs)
-          : true;
+        // === Filtrar por precio ===
+        let matchPrijs = true;
+        if (this.selectedPrijs.length) {
+          matchPrijs = this.selectedPrijs.some(prijsRange => {
+            const price = parseFloat(p.prijs);
+            switch (prijsRange) {
+              case 'tot10': return price >= 0 && price <= 10;
+              case '10tot15': return price > 10 && price <= 15;
+              case '15tot20': return price > 15 && price <= 20;
+              case '20tot30': return price > 20 && price <= 30;
+              case '30meer': return price > 30;
+              default: return true;
+            }
+          });
+        }
+
+        // === Filtrar por categoría ===
         const matchCategorie = this.selectedCategorie.length
           ? this.selectedCategorie.includes(p.categorie)
           : true;
-        const matchKlachten = this.selectedKlachten.length
-          ? p.klachten.some((k) => this.selectedKlachten.includes(k))
-          : true;
+
+        // === Filtrar por búsqueda ===
         const matchSearch = p.title
           .toLowerCase()
           .includes(this.searchTerm.toLowerCase());
-        return matchPrijs && matchCategorie && matchKlachten && matchSearch;
+
+        return matchPrijs && matchCategorie && matchSearch;
       });
     },
   },
   methods: {
     async fetchProducts() {
       try {
-        const res = await fetch(
-          "http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/products.php?action=list",
-          { method: "GET" }
-        );
+        const res = await fetch('http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/products.php?action=list', { method: 'GET' });
         const data = await res.json();
         if (data.success && Array.isArray(data.products)) {
-          // Map backend fields to UI fields expected by this component
-          this.products = data.products.map((p) => ({
-            id: p.id || Date.now() + Math.random(),
-            title: p.name || "Onbekend",
-            desc: p.category ? `${p.category}` : "",
-            img: p.image_url ? p.image_url : "../../assets/img/placeholder.png",
-            prijs: p.price ? String(p.price) : "",
-            categorie: p.category || "",
+          this.products = data.products.map(p => ({
+            title: p.name || 'Onbekend',
+            desc: p.category ? `${p.category}` : '',
+            img: p.image_url ? p.image_url : '../../assets/img/placeholder.png',
+            prijs: p.price ? String(p.price) : '',
+            categorie: p.category || '',
             klachten: [],
-            weight: p.grams ? `${p.grams}g` : "",
-            price: p.price ? parseFloat(p.price) : 0,
+            weight: p.grams ? `${p.grams}g` : '',
+            price: p.price ? `€${parseFloat(p.price).toFixed(2)}` : '',
           }));
         } else {
-          console.warn("No products returned from API", data);
+          console.warn('No products returned from API', data);
         }
       } catch (err) {
-        console.error("Error fetching products", err);
+        console.error('Error fetching products', err);
       }
     },
-
     addToCart(product) {
-      const cart = useCart();
-      cart.addItem({
-        id: product.id || Date.now() + Math.random(),
-        title: product.title,
-        price: product.price || parseFloat(product.prijs || 0),
-        img: product.img || product.image || "",
-        sizes: product.sizes || [],
-        size: product.size || (product.sizes ? product.sizes[0] : ""),
-        qty: 1,
-      });
-      this.addedMessage = `${product.title} is toegevoegd aan je winkelmandje.`;
-      this.showAdded = true;
-
-      setTimeout(() => {
-        this.showAdded = false;
-      }, 3500);
-    },
-  },
+      try {
+        const cartJson = localStorage.getItem('cart');
+        const cart = cartJson ? JSON.parse(cartJson) : [];
+        cart.push({ title: product.title, price: product.price || product.price, qty: 1 });
+        localStorage.setItem('cart', JSON.stringify(cart));
+        alert(`${product.title} toegevoegd aan winkelwagen`);
+      } catch (err) {
+        console.error('Failed to add to cart', err);
+      }
+    }
+  }
 };
 </script>
 
