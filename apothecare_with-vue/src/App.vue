@@ -1,8 +1,8 @@
-
 <template>
   <div id="app">
     <SiteHeader 
       @open-login="handleOpenLogin"
+      @go-cart="goToCart"
     />
 
     <LoginPage
@@ -75,6 +75,11 @@ export default {
       handleOpenLogin 
     };
   },
+  methods: {
+    goToCart() {
+      this.$router.push('/cart')
+    }
+  }
 };
 </script>
 
