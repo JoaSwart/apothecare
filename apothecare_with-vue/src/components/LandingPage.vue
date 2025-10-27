@@ -141,27 +141,27 @@
                 <p class="subtitle" style="margin-bottom: 40px;">Ontdek ons uitgebreide assortiment</p>
                 
                 <div class="category-grid">
-                    <a href="#" class="category-card" style="background-image: url('../assets/supplementen.jpg');">
+                    <router-link to="/producten" class="category-card" style="background-image: url('../assets/supplementen.jpg');">
                         <div class="card-overlay">
                             <h3>Vitamines & Supplementen</h3>
                             <p>Voor optimale gezondheid</p>
                             <span>Bekijk producten &rarr;</span>
                         </div>
-                    </a>
-                     <a href="#" class="category-card" style="background-image: url('../assets/kruidentheendranken.jpg');">
+                    </router-link>
+                     <router-link to="/producten" class="category-card" style="background-image: url('../assets/kruidentheendranken.jpg');">
                         <div class="card-overlay">
                             <h3>Kruidenthee & Dranken</h3>
                             <p>Natuurlijke ontspanning</p>
                             <span>Bekijk producten &rarr;</span>
                         </div>
-                    </a>
-                     <a href="#" class="category-card" style="background-image: url('../assets/aromatherapie.jpg');">
+                    </router-link>
+                      <router-link to="/producten" class="category-card" style="background-image: url('../assets/aromatherapie.jpg');">
                         <div class="card-overlay">
                             <h3>Aromatherapy & Oliën</h3>
                             <p>Voor lichaam en geest</p>
                             <span>Bekijk producten &rarr;</span>
                         </div>
-                    </a>
+                    </router-link>
                 </div>
             </div>
         </section>
@@ -173,7 +173,7 @@
 
 <script>
 import { ref, onMounted, onUnmounted } from 'vue';
-import ChatWidget from './ChatWidget.vue'; // Pas pad aan indien nodig
+import ChatWidget from './ChatWidget.vue'; 
 
 export default {
   name: 'LandingPage',
