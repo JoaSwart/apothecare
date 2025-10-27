@@ -191,7 +191,7 @@ export default {
   methods: {
     async fetchProducts() {
       try {
-        const res = await fetch('http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/products.php?action=list', { method: 'GET' });
+  const res = await fetch('http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/api/products.php?action=list', { method: 'GET' });
         const data = await res.json();
         if (data.success && Array.isArray(data.products)) {
           this.products = data.products.map((p) => ({

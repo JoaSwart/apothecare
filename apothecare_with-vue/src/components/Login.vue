@@ -71,7 +71,7 @@ export default {
     const isBeheerder = ref(false);
     const subtitle = ref('Log in of maak een account aan');
 
-    const baseUrl = 'http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/';
+  const baseUrl = 'http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/api/';
   const { emit } = getCurrentInstance();
   const router = useRouter();
 

@@ -247,7 +247,7 @@ export default {
     const userForm = ref({ user_id: null, username: '', email: '', phone: '' });
     const isEditUser = ref(false);
 
-    const baseUrl = 'http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/';
+  const baseUrl = 'http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/api/';
 
     // -------------------- FETCH FUNCTIONS --------------------
     async function fetchOrders() {

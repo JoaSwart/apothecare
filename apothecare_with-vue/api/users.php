@@ -2,7 +2,7 @@
 header("Access-Control-Allow-Origin: http://localhost:8080");
 header("Content-Type: application/json");
 
-include __DIR__ . '/../config.php';
+include __DIR__ . '/../src/config.php';
 
 $action = $_POST['action'] ?? $_GET['action'] ?? null;
 

@@ -3,15 +3,27 @@
     <button id="chat-toggle-btn" @click="toggleChatbox">
       <i class="fa-regular fa-comment"></i>
     </button>
+
     <div class="chatbox" :class="{ active: isChatboxActive }">
-      <div class="chatbox-messages">
-        <div class="message-bubble">
-          Hallo! Ik ben uw AI-assistent van Apothecare. Hoe kan ik u helpen met uw gezondheid en welzijn?
+      <div class="chatbox-messages" ref="messagesContainer">
+        <div
+          v-for="(msg, index) in messages"
+          :key="index"
+          class="message-bubble"
+          :class="msg.sender"
+        >
+          {{ msg.text }}
         </div>
       </div>
+
       <div class="chatbox-input-area">
-        <input type="text" placeholder="Typ uw vraag...">
-        <button class="send-btn">
+        <input
+          type="text"
+          v-model="userInput"
+          @keyup.enter="sendMessage"
+          placeholder="Typ uw vraag..."
+        >
+        <button class="send-btn" @click="sendMessage">
           <i class="fa-solid fa-paper-plane"></i>
         </button>
       </div>
@@ -20,17 +32,80 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 
 const isChatboxActive = ref(false);
+const userInput = ref('');
+const messages = ref([
+  { sender: 'ai', text: 'Hallo! Ik ben uw AI-assistent van Apothecare. Hoe kan ik u helpen?' }
+]);
+const messagesContainer = ref(null);
 
 const toggleChatbox = () => {
   isChatboxActive.value = !isChatboxActive.value;
+  if (isChatboxActive.value) scrollToBottom();
+};
+
+// Update this to the moved PHP endpoint
+const API_ENDPOINT = 'http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/api/chat.php';
+
+const scrollToBottom = async () => {
+  await nextTick();
+  const el = messagesContainer.value;
+  if (el) el.scrollTop = el.scrollHeight;
+};
+
+const sendMessage = async () => {
+  const text = userInput.value.trim();
+  if (!text) return;
+
+  messages.value.push({ sender: 'you', text });
+  userInput.value = '';
+  scrollToBottom();
+
+  // temporary typing bubble
+  const typingIndex = messages.value.push({ sender: 'ai', text: '...' }) - 1;
+  scrollToBottom();
+
+  const formData = new FormData();
+  formData.append('vraag', text);
+
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      messages.value[typingIndex] = { sender: 'ai', text: `Server error: ${response.status}` };
+      scrollToBottom();
+      return;
+    }
+
+    const data = await response.json();
+
+    if (data.antwoord) {
+      messages.value[typingIndex] = { sender: 'ai', text: data.antwoord };
+    } else if (data.error) {
+      messages.value[typingIndex] = { sender: 'ai', text: `Error: ${data.error}` };
+    } else {
+      messages.value[typingIndex] = { sender: 'ai', text: 'Geen antwoord ontvangen.' };
+    }
+    scrollToBottom();
+  } catch (err) {
+    messages.value[typingIndex] = { sender: 'ai', text: `Fetch error: ${err.message}` };
+    scrollToBottom();
+  }
 };
 </script>
 
+<style>
+.message-bubble.you { background: #d9fdd3; text-align: right; }
+.message-bubble.ai  { background: #eeeeee; }
+.chatbox.active { display: block; }
+</style>
+
 <style scoped>
-/* Deze stijlen zijn 'scoped', wat betekent dat ze alleen voor dit component gelden */
 .chat-widget {
     position: fixed;
     bottom: 30px;
