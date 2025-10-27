@@ -60,6 +60,9 @@
                 <th>Naam</th>
                 <th>Contact</th>
                 <th>Items</th>
+                <th>Straat</th>
+                <th>Postcode</th>
+                <th>Plaats</th>
                 <th>Datum</th>
                 <th>Status</th>
                 <th>Betaald Bedrag</th>
@@ -72,13 +75,19 @@
                 <td>{{ order.name }}</td>
                 <td>{{ order.contact }}</td>
                 <td class="center">{{ order.items }}</td>
+                <td>{{ order.straat || '-' }}</td>
+                <td>{{ order.postcode || '-' }}</td>
+                <td>{{ order.plaats || '-' }}</td>
                 <td>{{ order.date }}</td>
                 <td><span :class="['badge', order.statusClass]">{{ order.status }}</span></td>
                 <td>€{{ Number(order.betaaldBedrag).toFixed(2) }}</td>
-                <td><a href="#" @click.prevent="view(order)">Bekijken</a></td>
+                <td>
+                  <a href="#" @click.prevent="view(order)">Bekijken</a> |
+                  <a href="#" @click.prevent="deleteOrder(order)">Verwijderen</a>
+                </td>
               </tr>
               <tr v-if="orders.length === 0">
-                <td colspan="8" class="center">Geen bestellingen gevonden.</td>
+                <td colspan="11" class="center">Geen bestellingen gevonden.</td>
               </tr>
             </tbody>
           </table>
@@ -209,11 +218,11 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 
 export default {
   name: 'DashBoard',
   setup() {
-    const omzet = ref(930);
     const totalOrders = ref(0);
     const products = ref(0);
     const active = ref('bestellingen');
@@ -221,6 +230,11 @@ export default {
     const searchQuery = ref('');
 
     const orders = ref([]);
+    // omzet is computed from the betaaldBedrag of all orders
+    const omzet = computed(() => {
+      const sum = orders.value.reduce((s, o) => s + (Number(o.betaaldBedrag) || 0), 0);
+      return '€' + sum.toFixed(2);
+    });
     const productsList = ref([]);
     const usersList = ref([]);
 
@@ -252,6 +266,23 @@ export default {
         console.error('Netwerkfout bij ophalen bestellingen:', err);
         orders.value = [];
         totalOrders.value = 0;
+      }
+    }
+
+    async function deleteOrder(order) {
+      if (!confirm(`Weet je zeker dat je bestelling #${order.id} wilt verwijderen?`)) return;
+      const formData = new URLSearchParams();
+      formData.append('action', 'delete');
+      formData.append('bestellingId', order.id);
+      try {
+        const res = await fetch(baseUrl + 'orders.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData });
+        const data = await res.json();
+        if (data.success) {
+          alert(data.message);
+          fetchOrders();
+        } else alert('Fout bij verwijderen: ' + data.message);
+      } catch (err) {
+        alert('Netwerkfout: ' + err.message);
       }
     }
 
@@ -404,10 +435,13 @@ export default {
       if (tab === 'klanten') fetchUsers();
     }
 
+    const router = useRouter();
+
     function handleLogout() {
       localStorage.removeItem('user');
       alert('Uitgelogd!');
-      window.location.reload();
+      // navigate back to landing page so app shows the public view
+      router.push('/');
     }
 
     const filteredProducts = computed(() => {
@@ -431,7 +465,7 @@ export default {
       usersList, openUserModal, deleteUser, userForm, showUserModal, isEditUser, saveUser, closeUserModal,
       handleLogout, setActiveAndFetch,
       showModal, openAddModal, openEditModal, closeModal, saveProduct, modalForm, isEditMode,
-      deleteProduct, filterProducts
+      deleteProduct, filterProducts, deleteOrder
     };
   }
 }
@@ -443,12 +477,12 @@ export default {
 
 <style scoped>
 :root {
-  --bg: #fafafa;
-  --card-bg: #fff;
-  --muted: #6b7280;
-  --accent: #111827;
+  --bg: #f4f6f8; /* slightly darker page background for contrast */
+  --card-bg: #ffffff;
+  --muted: #475569; /* darker muted text */
+  --accent: #0b1320; /* stronger accent */
   --green: #dff3e8;
-  --yellow: #fff7d6;
+  --yellow: #fff3c4;
 }
 
 html,
@@ -462,16 +496,17 @@ body {
   font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
 }
 
-.container {
-  max-width: 980px;
+    .container {
+  max-width: 1200px; /* increased so tables have more room */
   margin: 36px auto;
   padding: 0 16px;
 }
 
 .page-title {
-  font-size: 13px;
-  color: #374151;
+  font-size: 14px;
+  color: #0f172a;
   margin-bottom: 18px;
+  letter-spacing: 0.2px;
 }
 
 .metrics {
@@ -482,19 +517,20 @@ body {
 
 .stat-card {
   background: var(--card-bg);
-  border: 1px solid rgba(16, 24, 40, 0.04);
+  border: 1px solid rgba(16, 24, 40, 0.08);
   border-radius: 10px;
   padding: 18px;
   display: flex;
   gap: 12px;
   align-items: center;
   flex: 1;
+  box-shadow: 0 2px 6px rgba(16,24,40,0.03);
 }
 
 .stat-icon {
   width: 44px;
   height: 44px;
-  background: #eef7f0;
+  background: #e9f6ef;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -532,7 +568,7 @@ body {
 
 .seg-btn {
   border-radius: 8px;
-  border: 1px solid rgba(16, 24, 40, 0.06);
+  border: 1px solid rgba(16, 24, 40, 0.08);
   padding: 8px 14px;
   background: #fff;
   margin-right: 8px;
@@ -560,28 +596,30 @@ body {
   background: var(--card-bg);
   padding: 16px 18px;
   border-radius: 10px 10px 0 0;
-  border: 1px solid rgba(16, 24, 40, 0.04);
+  border: 1px solid rgba(16, 24, 40, 0.06);
+  border-bottom: 2px solid rgba(16,24,40,0.06);
   margin: 0 0 0;
 }
 
-.table-wrap {
+    .table-wrap {
   border: 1px solid rgba(16, 24, 40, 0.04);
   border-top: 0;
   border-radius: 0 0 10px 10px;
-  overflow: hidden;
+  overflow: auto; /* allow horizontal scrolling when table is wide */
 }
 
 .orders-table {
   width: 100%;
+  min-width: 1100px; /* ensure table has enough room for all columns */
   border-collapse: collapse;
   background: #fff;
 }
 
 .orders-table th,
 .orders-table td {
-  padding: 14px 18px;
+  padding: 18px 22px; /* more spacing makes the table physically larger */
   text-align: left;
-  font-size: 13px;
+  font-size: 14px; /* slightly larger text */
   border-top: 1px solid rgba(15, 23, 42, 0.03);
 }
 

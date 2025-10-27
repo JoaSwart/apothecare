@@ -4,6 +4,7 @@ import ProductenOverzicht from '../components/ProductenOverzicht.vue';
 import Cart from '../components/Cart.vue';
 import Dashboard from '../components/Dashboard.vue'; 
 import LoginPage from '../components/Login.vue';
+import CheckoutPage from '../components/Checkout.vue';
 
 const routes = [
   {
@@ -25,6 +26,11 @@ const routes = [
     path: '/dashboard', 
     name: 'Dashboard',
     component: Dashboard
+  },
+  {
+    path: '/checkout',
+    name: 'Checkout',
+    component: CheckoutPage
   },
   {
     path: '/login',        

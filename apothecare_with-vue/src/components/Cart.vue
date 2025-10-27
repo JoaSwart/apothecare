@@ -9,7 +9,7 @@
           <img class="item-image" :src="item.img" alt="product" />
           <div class="item-body">
             <h3 class="item-title">{{ item.title }}</h3>
-            <div class="item-price">${{ item.price.toFixed(2) }}</div>
+            <div class="item-price">${{ Number(item.price || 0).toFixed(2) }}</div>
 
             <div class="item-controls">
               <label class="size-label"
@@ -39,20 +39,16 @@
           <h4>Cart Summary</h4>
           <div class="summary-row">
             <span>Subtotal</span>
-            <span class="muted">________________________</span>
+            <span class="muted">€{{ subtotal.toFixed(2) }}</span>
           </div>
           <div class="summary-row">
-            <span>Shipping</span>
-            <span>$5.00</span>
-          </div>
-          <div class="summary-row">
-            <span>Estimated tax</span>
-            <span>$5.00</span>
+            <span>Verzendkosten</span>
+            <span>€4.95</span>
           </div>
 
           <div class="summary-row total">
             <span>Total</span>
-            <span>${{ total.toFixed(2) }}</span>
+            <span>€{{ total.toFixed(2) }}</span>
           </div>
 
           <button class="checkout-btn" @click="onCheckout">Checkout</button>
@@ -73,17 +69,17 @@
 
 <script>
 import { ref, computed } from "vue";
+import { useRouter } from 'vue-router'
 import useCart from "../store/cart";
 
 export default {
   name: "CartPage",
-  setup(_, { emit }) {
+  setup() {
     const cart = useCart();
     const items = cart.items;
-    const subtotal = cart.subtotal;
-    const shipping = 5.0;
-    const tax = 5.0;
-    const total = computed(() => subtotal.value + shipping + tax);
+  const subtotal = cart.subtotal;
+  const shipping = 4.95;
+  const total = computed(() => subtotal.value + shipping);
     const promo = ref("");
 
     function increment(i) {
@@ -99,9 +95,10 @@ export default {
       alert(`Promo '${promo.value}' applied (demo)`);
     }
 
+    const router = useRouter();
     function onCheckout() {
-      // notify parent (App.vue) to show checkout page
-      emit("checkout");
+      // navigate to the checkout page
+      router.push('/checkout');
     }
 
     return {
@@ -109,7 +106,6 @@ export default {
       promo,
       subtotal,
       shipping,
-      tax,
       total,
       increment,
       decrement,

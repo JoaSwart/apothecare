@@ -9,7 +9,7 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 try {
     if ($action === 'list') {
-        $stmt = $pdo->query("SELECT BestellingID, KlantID, Naam, Contact, Items, Datum, Status, BetaaldBedrag FROM bestellingen ORDER BY Datum DESC");
+        $stmt = $pdo->query("SELECT BestellingID, KlantID, Naam, Contact, Items, Datum, Status, BetaaldBedrag, Straat, Postcode, Plaats FROM bestellingen ORDER BY Datum DESC");
         $orders = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $orders[] = [
@@ -21,7 +21,10 @@ try {
                 'date' => date('d M Y', strtotime($row['Datum'])),
                 'status' => $row['Status'],
                 'statusClass' => strtolower(str_replace(' ', '', $row['Status'])),
-                'betaaldBedrag' => number_format($row['BetaaldBedrag'], 2)
+                'betaaldBedrag' => number_format($row['BetaaldBedrag'], 2),
+                'straat' => $row['Straat'],
+                'postcode' => $row['Postcode'],
+                'plaats' => $row['Plaats']
             ];
         }
         echo json_encode(['success' => true, 'orders' => $orders]);
@@ -35,14 +38,17 @@ try {
         $items = $_POST['items'] ?? '';
         $status = $_POST['status'] ?? 'In afwachting';
         $betaaldBedrag = $_POST['betaaldBedrag'] ?? 0.00;
+        $straat = $_POST['straat'] ?? '';
+        $postcode = $_POST['postcode'] ?? '';
+        $plaats = $_POST['plaats'] ?? '';
 
         if (!$klantId || !$naam) {
             echo json_encode(['success' => false, 'message' => 'Klant ID en Naam zijn verplicht']);
             exit;
         }
 
-        $stmt = $pdo->prepare("INSERT INTO bestellingen (KlantID, Naam, Contact, Items, Status, BetaaldBedrag) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$klantId, $naam, $contact, $items, $status, $betaaldBedrag]);
+        $stmt = $pdo->prepare("INSERT INTO bestellingen (KlantID, Naam, Contact, Items, Status, BetaaldBedrag, Straat, Postcode, Plaats) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$klantId, $naam, $contact, $items, $status, $betaaldBedrag, $straat, $postcode, $plaats]);
         echo json_encode(['success' => true, 'message' => 'Bestelling toegevoegd']);
         exit;
     }
@@ -51,9 +57,12 @@ try {
         $id = $_POST['bestellingId'] ?? 0;
         $status = $_POST['status'] ?? '';
         $betaaldBedrag = $_POST['betaaldBedrag'] ?? '';
+        $straat = $_POST['straat'] ?? '';
+        $postcode = $_POST['postcode'] ?? '';
+        $plaats = $_POST['plaats'] ?? '';
 
-        $stmt = $pdo->prepare("UPDATE bestellingen SET Status = ?, BetaaldBedrag = ? WHERE BestellingID = ?");
-        $stmt->execute([$status, $betaaldBedrag, $id]);
+        $stmt = $pdo->prepare("UPDATE bestellingen SET Status = ?, BetaaldBedrag = ?, Straat = ?, Postcode = ?, Plaats = ? WHERE BestellingID = ?");
+        $stmt->execute([$status, $betaaldBedrag, $straat, $postcode, $plaats, $id]);
         echo json_encode(['success' => true, 'message' => 'Bestelling bijgewerkt']);
         exit;
     }

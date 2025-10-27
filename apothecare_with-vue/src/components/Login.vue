@@ -58,6 +58,7 @@
 
 <script>
 import { ref, getCurrentInstance } from 'vue';
+import { useRouter } from 'vue-router';
 
 export default {
   name: "LoginPage",
@@ -71,7 +72,8 @@ export default {
     const subtitle = ref('Log in of maak een account aan');
 
     const baseUrl = 'http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/';
-    const { emit } = getCurrentInstance();
+  const { emit } = getCurrentInstance();
+  const router = useRouter();
 
     async function submit() {
       if (actief.value === 'register') {
@@ -132,6 +134,14 @@ export default {
             is_admin: data.is_admin
           }));
 
+          // Navigate to dashboard for admins, otherwise go to home
+          if (data.is_admin) {
+            router.push('/dashboard');
+          } else {
+            router.push('/');
+          }
+
+          // still emit event for any listening parent
           emit('login-success');
         } else {
           alert(data.message);

@@ -1,6 +1,6 @@
 <template>
   <div class="checkout container">
-    <a class="back" href="#" @click.prevent="$emit('back')">← Terug naar winkelmandje</a>
+  <a class="back" href="#" @click.prevent="goBack">← Terug naar winkelmandje</a>
 
     <div class="checkout-grid">
       <div class="checkout-left">
@@ -68,16 +68,23 @@
 
 <script>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import useCart from '../store/cart'
 
 export default {
   name: 'CheckoutPage',
   setup() {
+    const router = useRouter()
     const cart = useCart()
     const items = cart.items
     const subtotal = cart.subtotal
     const total = computed(() => subtotal.value + 4.95)
-    return { items, subtotal, total }
+
+    function goBack() {
+      router.push('/cart')
+    }
+
+    return { items, subtotal, total, goBack }
   }
 }
 </script>

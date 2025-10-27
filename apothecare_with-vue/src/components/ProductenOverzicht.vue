@@ -134,7 +134,6 @@ export default {
     };
   },
   mounted() {
-    this.searchTerm = this.$route.query.q ? String(this.$route.query.q) : '';
     this.fetchProducts();
   },
   computed: {
@@ -170,8 +169,7 @@ export default {
       });
     },
   },
-
-   methods: {
+  methods: {
     async fetchProducts() {
       try {
         const res = await fetch('http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/products.php?action=list', { method: 'GET' });
@@ -187,20 +185,8 @@ export default {
             weight: p.grams ? `${p.grams}g` : '',
             price: p.price ? `€${parseFloat(p.price).toFixed(2)}` : '',
           }));
-        }
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
-    },
-
-    addToCart(product) {
-      this.addedMessage = `${product.title} is toegevoegd aan de winkelmand.`;
-      this.showAdded = true;
-      setTimeout(() => {
-        this.showAdded = false;
-      }, 2000);
-    },
-  },
+        } else {
+          console.warn('No products returned from API', data);
         }
       } catch (err) {
         console.error('Error fetching products', err);
@@ -216,30 +202,12 @@ export default {
         console.error('Failed to add to cart', err);
       }
     }
-
-    methods: {
-    async fetchProducts() {
-      try {
-        const res = await fetch('http://localhost:3000/products');
-        this.products = await res.json();
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
-    },
-
-    addToCart(product) {
-      this.addedMessage = `${product.title} is toegevoegd aan de winkelmand.`;
-      this.showAdded = true;
-      setTimeout(() => {
-        this.showAdded = false;
-      }, 2000);
-    },
-  },
-
+  }
 };
 </script>
 
 <style scoped>
+/* Paste your entire CSS from style.css here */
 * {
   padding: 0;
   margin: 0;
@@ -266,6 +234,7 @@ body {
   display: flex;
   padding: 20px 0;
   width: 100%;
+  /* allow content to grow naturally so App-level footer is not overlapped */
   min-height: 0;
 }
 
@@ -306,6 +275,7 @@ body {
   background-color: #f9fafb;
 }
 #zoekveld:focus {
+  /* lichtgrijs randje ipv felblauw */
   outline: 2px solid #aaa;
 }
 
