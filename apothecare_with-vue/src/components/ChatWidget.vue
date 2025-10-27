@@ -99,12 +99,6 @@ const sendMessage = async () => {
 };
 </script>
 
-<style>
-.message-bubble.you { background: #d9fdd3; text-align: right; }
-.message-bubble.ai  { background: #eeeeee; }
-.chatbox.active { display: block; }
-</style>
-
 <style scoped>
 .chat-widget {
     position: fixed;
@@ -166,13 +160,28 @@ const sendMessage = async () => {
 }
 
 .message-bubble {
-    background-color: #e9ecef;
-    padding: 10px 15px;
-    border-radius: 18px;
-    max-width: 80%;
-    line-height: 1.4;
-    font-size: 14px;
-    color: #343a40;
+  background-color: #e9ecef;
+  padding: 10px 15px;
+  border-radius: 18px;
+  max-width: 80%;
+  display: block;
+  margin: 8px 0; /* vertical spacing between bubbles */
+  line-height: 1.4;
+  font-size: 14px;
+  color: #343a40;
+}
+
+/* Align AI bubbles to the left and user bubbles to the right with spacing */
+.message-bubble.ai {
+  background: #eeeeee;
+  margin-right: auto; /* push to left */
+  text-align: left;
+}
+
+.message-bubble.you {
+  background: #d9fdd3;
+  margin-left: auto; /* push to right */
+  text-align: right;
 }
 
 .chatbox-input-area {
