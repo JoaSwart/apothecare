@@ -11,8 +11,12 @@
     <div class="icons">
       <!-- Search icon -->
       <div v-if="isSearchVisible" class="search-container">
-        <input type="text" placeholder="Search products..." />
-        <i @click="toggleSearch" class="fa-solid fa-magnifying-glass"></i>
+        <form @submit.prevent="goToProducts" style="display:flex; align-items:center">
+          <input ref="headerSearch" v-model="searchQuery" type="text" placeholder="Zoek producten..." />
+          <button type="submit" style="background:transparent;border:none;color:inherit;cursor:pointer;padding:6px;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+        </form>
       </div>
       <i v-else @click="toggleSearch" class="fa-solid fa-magnifying-glass"></i>
 
@@ -31,11 +35,24 @@ export default {
   data() {
     return {
       isSearchVisible: false
+      ,searchQuery: ''
     };
   },
   methods: {
     toggleSearch() {
       this.isSearchVisible = !this.isSearchVisible;
+      this.$nextTick(() => {
+        if (this.isSearchVisible && this.$refs.headerSearch) {
+          this.$refs.headerSearch.focus();
+        }
+      });
+    }
+    ,goToProducts() {
+      // navigate to producten route with query param 'q'
+      const q = this.searchQuery ? String(this.searchQuery).trim() : '';
+      this.$router.push({ name: 'Producten', query: q ? { q } : {} });
+      // optionally hide the search input after navigating
+      this.isSearchVisible = false;
     }
   }
 };
