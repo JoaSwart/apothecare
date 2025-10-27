@@ -2,7 +2,7 @@
   <div id="app">
     <SiteHeader 
       @open-login="handleOpenLogin"
-      @go-cart="goToCart"
+      @go-cart="goToCart" 
     />
 
     <LoginPage
