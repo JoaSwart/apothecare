@@ -134,108 +134,96 @@ export default {
     };
   },
   mounted() {
-    this.searchTerm = this.$route.query.q ? String(this.$route.query.q) : '';
+    // initialize search term from route if provided
+    this.searchTerm = this.$route && this.$route.query && this.$route.query.q ? String(this.$route.query.q) : '';
     this.fetchProducts();
   },
   computed: {
     filteredProducts() {
       return this.products.filter((p) => {
-        // === Filtrar por precio ===
+        // price filter
         let matchPrijs = true;
         if (this.selectedPrijs.length) {
-          matchPrijs = this.selectedPrijs.some(prijsRange => {
-            const price = parseFloat(p.prijs);
+          matchPrijs = this.selectedPrijs.some((prijsRange) => {
+            const price = parseFloat(p.prijs || p.price || '0');
             switch (prijsRange) {
-              case 'tot10': return price >= 0 && price <= 10;
-              case '10tot15': return price > 10 && price <= 15;
-              case '15tot20': return price > 15 && price <= 20;
-              case '20tot30': return price > 20 && price <= 30;
-              case '30meer': return price > 30;
-              default: return true;
+              case 'tot10':
+                return price >= 0 && price <= 10;
+              case '10tot15':
+                return price > 10 && price <= 15;
+              case '15tot20':
+                return price > 15 && price <= 20;
+              case '20tot30':
+                return price > 20 && price <= 30;
+              case '30meer':
+                return price > 30;
+              default:
+                return true;
             }
           });
         }
 
-        // === Filtrar por categoría ===
         const matchCategorie = this.selectedCategorie.length
           ? this.selectedCategorie.includes(p.categorie)
           : true;
 
-        // === Filtrar por búsqueda ===
-        const matchSearch = p.title
-          .toLowerCase()
-          .includes(this.searchTerm.toLowerCase());
+        const matchSearch = !this.searchTerm
+          ? true
+          : (p.title || '').toLowerCase().includes(String(this.searchTerm).toLowerCase());
 
         return matchPrijs && matchCategorie && matchSearch;
       });
     },
   },
-
-   methods: {
+  watch: {
+    // sync searchTerm with the route query param
+    searchTerm(newVal) {
+      const q = newVal ? String(newVal).trim() : undefined;
+      if ((this.$route.query.q || '') !== (q || '')) {
+        this.$router.replace({ name: 'Producten', query: q ? { q } : {} }).catch(() => {});
+      }
+    },
+    '$route.query.q'(newQ) {
+      const q = newQ ? String(newQ) : '';
+      if (this.searchTerm !== q) this.searchTerm = q;
+    }
+  },
+  methods: {
     async fetchProducts() {
       try {
         const res = await fetch('http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/src/api/products.php?action=list', { method: 'GET' });
         const data = await res.json();
         if (data.success && Array.isArray(data.products)) {
-          this.products = data.products.map(p => ({
+          this.products = data.products.map((p) => ({
             title: p.name || 'Onbekend',
             desc: p.category ? `${p.category}` : '',
-            img: p.image_url ? p.image_url : '../../assets/img/placeholder.png',
+            img: p.image_url ? p.image_url : require('../assets/avatar-placeholder.svg'),
             prijs: p.price ? String(p.price) : '',
             categorie: p.category || '',
             klachten: [],
             weight: p.grams ? `${p.grams}g` : '',
             price: p.price ? `€${parseFloat(p.price).toFixed(2)}` : '',
           }));
-        }
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
-    },
-
-    addToCart(product) {
-      this.addedMessage = `${product.title} is toegevoegd aan de winkelmand.`;
-      this.showAdded = true;
-      setTimeout(() => {
-        this.showAdded = false;
-      }, 2000);
-    },
-  },
+        } else {
+          console.warn('No products returned from API', data);
         }
       } catch (err) {
         console.error('Error fetching products', err);
       }
     },
+
     addToCart(product) {
       try {
-        // use the central cart store so the rest of the app stays in sync
         const cart = useCart();
         cart.addItem(product);
-        alert(`${product.title} toegevoegd aan winkelwagen`);
+        this.addedMessage = `${product.title} is toegevoegd aan de winkelmand.`;
+        this.showAdded = true;
+        setTimeout(() => (this.showAdded = false), 1800);
       } catch (err) {
         console.error('Failed to add to cart', err);
       }
-    }
-
-    methods: {
-    async fetchProducts() {
-      try {
-        const res = await fetch('http://localhost:3000/products');
-        this.products = await res.json();
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
-    },
-
-    addToCart(product) {
-      this.addedMessage = `${product.title} is toegevoegd aan de winkelmand.`;
-      this.showAdded = true;
-      setTimeout(() => {
-        this.showAdded = false;
-      }, 2000);
     },
   },
-
 };
 </script>
 
