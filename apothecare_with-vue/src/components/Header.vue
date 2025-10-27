@@ -20,7 +20,7 @@
       <i class="fa-solid fa-user" @click="$emit('open-login')"></i>
 
       <!-- Cart icon -->
-      <i class="fa-solid fa-cart-shopping"></i>
+      <i href="#" @click.prevent="$emit('go-cart')" class="fa-solid fa-cart-shopping"></i>
     </div>
   </header>
 </template>
