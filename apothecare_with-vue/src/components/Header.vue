@@ -67,6 +67,7 @@ header {
   background-color: #fff;
   border-bottom: 1px solid #ddd;
   font-family: 'Poppins', sans-serif;
+  position: relative; 
 }
 
 .logo {
@@ -75,12 +76,18 @@ header {
   color: #111;
 }
 
+nav {
+  flex: 1;
+  text-align: center;
+}
+
 nav a {
   margin: 0 15px;
   text-decoration: none;
   color: #111;
   font-weight: 500;
   cursor: pointer;
+  transition: transform 0.3s ease, color 0.12s ease;
 }
 
 .icons {
@@ -89,12 +96,41 @@ nav a {
   gap: 15px;
   font-size: 18px;
   cursor: pointer;
+  min-width: 140px;
+  justify-content: flex-end;
 }
 
 .search-container input {
   padding: 5px 10px;
   border-radius: 999px;
   border: 1px solid #ccc;
-  width: 200px;
+  width: 220px;
+}
+
+.search-container {
+  position: absolute;
+  right: 120px; 
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 60;
+}
+
+@media (max-width: 768px) {
+  .search-container {
+    position: static;
+    transform: none;
+    right: auto;
+    width: 100%;
+    margin-right: 10px;
+  }
+  .search-container input {
+    width: 100%;
+  }
+}
+nav a.router-link-active {
+  font-weight: 800; 
+  transform: scale(1.03);
+  color: #2d7a4f; 
+  
 }
 </style>

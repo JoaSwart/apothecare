@@ -9,21 +9,25 @@
     </router-view>
 
     <SiteFooter />
+
+    <ChatWidget v-if="showChat" />
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import SiteHeader from './components/Header.vue';
 import SiteFooter from './components/Footer.vue';
+import ChatWidget from './components/ChatWidget.vue';
 
 export default {
   name: 'App',
-  components: { SiteHeader, SiteFooter },
+  components: { SiteHeader, SiteFooter, ChatWidget },
   setup() {
     const loggedInUser = ref(null);
     const router = useRouter();
+    const route = useRoute();
 
     const checkLogin = () => {
       const userJson = localStorage.getItem('user');
@@ -38,11 +42,19 @@ export default {
       router.push('/login'); // navigate to login page
     };
 
+    const showChat = computed(() => {
+      try {
+        return route.name === 'Producten' || (route.path && route.path.startsWith('/producten'));
+      } catch (e) {
+        return false;
+      }
+    });
+
     onMounted(() => {
       checkLogin();
     });
 
-    return { loggedInUser, handleOpenLogin };
+    return { loggedInUser, handleOpenLogin, showChat };
   },
 };
 </script>
