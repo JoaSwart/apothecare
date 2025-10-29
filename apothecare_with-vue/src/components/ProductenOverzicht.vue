@@ -351,7 +351,7 @@ input[type="checkbox"] {
 .product-img {
   width: 100%;
   height: 300px;
-  object-fit: cover;
+  object-fit: contain; /* image fix */
   border-bottom: 1px solid #eee;
   border-top-right-radius: 8px;
   border-top-left-radius: 8px;
