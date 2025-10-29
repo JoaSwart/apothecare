@@ -48,8 +48,9 @@ try {
         }
 
         $stmt = $pdo->prepare("INSERT INTO bestellingen (KlantID, Naam, Contact, Items, Status, BetaaldBedrag, Straat, Postcode, Plaats) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$klantId, $naam, $contact, $items, $status, $betaaldBedrag, $straat, $postcode, $plaats]);
-        echo json_encode(['success' => true, 'message' => 'Bestelling toegevoegd']);
+    $stmt->execute([$klantId, $naam, $contact, $items, $status, $betaaldBedrag, $straat, $postcode, $plaats]);
+    $orderId = $pdo->lastInsertId();
+    echo json_encode(['success' => true, 'message' => 'Bestelling toegevoegd', 'orderId' => $orderId]);
         exit;
     }
 

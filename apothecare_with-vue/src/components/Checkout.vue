@@ -9,18 +9,18 @@
         <section class="card form-card">
           <h4>Persoonlijke gegevens</h4>
           <div class="row">
-            <label>Volledige naam *<input placeholder="Jan Jansen"/></label>
-            <label>E-mailadres *<input placeholder="jan@voorbeeld.nl"/></label>
+            <label>Volledige naam *<input v-model="name" placeholder="Jan Jansen"/></label>
+            <label>E-mailadres *<input v-model="email" placeholder="jan@voorbeeld.nl"/></label>
           </div>
           <div class="row">
-            <label>Telefoonnummer *<input placeholder="06 12345678"/></label>
+            <label>Telefoonnummer *<input v-model="phone" placeholder="06 12345678"/></label>
           </div>
           <div class="row">
-            <label>Adres *<input placeholder="Straatnaam 123"/></label>
+            <label>Adres *<input v-model="straat" placeholder="Straatnaam 123"/></label>
           </div>
           <div class="row">
-            <label>Postcode *<input placeholder="1234 AB"/></label>
-            <label>Plaats *<input placeholder="Amsterdam"/></label>
+            <label>Postcode *<input v-model="postcode" placeholder="1234 AB"/></label>
+            <label>Plaats *<input v-model="plaats" placeholder="Amsterdam"/></label>
           </div>
         </section>
 
@@ -58,7 +58,7 @@
 
           <div class="summary-row total"><strong>Totaal</strong><strong>€{{ total.toFixed(2) }}</strong></div>
 
-          <button class="place-btn">✔ Bestelling plaatsen</button>
+          <button class="place-btn" @click="placeOrder" :disabled="placing">✔ Bestelling plaatsen</button>
           <p class="small muted">Door te bestellen gaat u akkoord met onze algemene voorwaarden</p>
         </div>
       </aside>
@@ -67,7 +67,7 @@
 </template>
 
 <script>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import useCart from '../store/cart'
 
@@ -80,11 +80,78 @@ export default {
     const subtotal = cart.subtotal
     const total = computed(() => subtotal.value + 4.95)
 
+    const name = ref('')
+    const email = ref('')
+    const phone = ref('')
+    const straat = ref('')
+    const postcode = ref('')
+    const plaats = ref('')
+    const placing = ref(false)
+
+    const baseUrl = 'http://localhost/Projectweek%20october/apothecare/apothecare_with-vue/api/'
+
     function goBack() {
       router.push('/cart')
     }
 
-    return { items, subtotal, total, goBack }
+    async function placeOrder() {
+      if (placing.value) return
+
+      // Basic validation
+      if (!name.value || !email.value || !phone.value || !straat.value || !postcode.value || !plaats.value) {
+        alert('Vul alle verplichte velden in.');
+        return;
+      }
+
+      // Ensure user is logged in (optional)
+      const storedUser = JSON.parse(localStorage.getItem('user') || 'null')
+      if (!storedUser || !storedUser.user_id) {
+        alert('Log in of maak een account aan om een bestelling te plaatsen.');
+        router.push('/login');
+        return;
+      }
+
+      placing.value = true
+
+      // Prepare items payload (simplify to essential fields)
+      const payloadItems = items.map(it => ({ title: it.title, price: Number(it.price), qty: it.qty, size: it.size || '' }))
+
+      const params = new URLSearchParams()
+      params.append('action', 'add')
+      params.append('klantId', storedUser.user_id)
+      params.append('naam', name.value)
+      params.append('contact', phone.value || email.value)
+      params.append('items', JSON.stringify(payloadItems))
+      params.append('status', 'In afwachting')
+      params.append('betaaldBedrag', total.value.toFixed(2))
+      params.append('straat', straat.value)
+      params.append('postcode', postcode.value)
+      params.append('plaats', plaats.value)
+
+      try {
+        const res = await fetch(baseUrl + 'orders.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString()
+        })
+        const data = await res.json()
+        if (data.success) {
+          alert('Bestelling succesvol geplaatst!')
+          // clear cart
+          cart.clear()
+          // redirect to home or a success page
+          router.push('/')
+        } else {
+          alert('Fout bij plaatsen bestelling: ' + (data.message || 'Onbekende fout'))
+        }
+      } catch (err) {
+        alert('Netwerkfout: ' + err.message)
+      } finally {
+        placing.value = false
+      }
+    }
+
+    return { items, subtotal, total, goBack, name, email, phone, straat, postcode, plaats, placeOrder, placing }
   }
 }
 </script>

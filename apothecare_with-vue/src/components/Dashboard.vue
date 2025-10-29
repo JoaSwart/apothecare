@@ -46,7 +46,7 @@
         <button :class="['seg-btn', active === 'klanten' ? 'active' : '']"
           @click="setActiveAndFetch('klanten')">Gebruikers</button>
         <input type="text" placeholder="Zoek op naam of categorie..." class="search-input" v-model="searchQuery"
-          @input="filterProducts" @keyup.enter="filterProducts" />
+          @input="onSearchInput" @keyup.enter="onSearchInput" />
       </nav>
 
       <!-- Bestellingen -->
@@ -70,7 +70,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="order in orders" :key="order.id">
+              <tr v-for="order in filteredOrders" :key="order.id">
                 <td>{{ '#' + order.id }}</td>
                 <td>{{ order.name }}</td>
                 <td>{{ order.contact }}</td>
@@ -86,7 +86,7 @@
                   <a href="#" @click.prevent="deleteOrder(order)">Verwijderen</a>
                 </td>
               </tr>
-              <tr v-if="orders.length === 0">
+              <tr v-if="filteredOrders.length === 0">
                 <td colspan="11" class="center">Geen bestellingen gevonden.</td>
               </tr>
             </tbody>
@@ -96,8 +96,10 @@
 
       <!-- Producten -->
       <section class="panel" v-if="active === 'producten'">
-        <h3 class="panel-title">Producten Overzicht</h3>
-        <button @click="openAddModal" class="btn-add">+ Product toevoegen</button>
+        <div class="panel-header">
+          <h3 class="panel-title">Producten Overzicht</h3>
+          <button @click="openAddModal" class="btn-add">+ Product toevoegen</button>
+        </div>
         <p v-if="loadingProducts">Laden producten...</p>
         <div class="table-wrap" v-if="!loadingProducts">
           <table class="orders-table">
@@ -150,7 +152,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in usersList" :key="user.user_id">
+              <tr v-for="user in filteredUsers" :key="user.user_id">
                 <td>{{ '#' + user.user_id }}</td>
                 <td>{{ user.username }}</td>
                 <td>{{ user.email }}</td>
@@ -162,7 +164,7 @@
                   <a href="#" @click.prevent="deleteUser(user)">Verwijderen</a>
                 </td>
               </tr>
-              <tr v-if="usersList.length === 0">
+              <tr v-if="filteredUsers.length === 0">
                 <td colspan="7" class="center">Geen gebruikers gevonden.</td>
               </tr>
             </tbody>
@@ -212,6 +214,9 @@
         </div>
       </div>
 
+      <!-- Chat widget included on dashboard -->
+      <ChatWidget />
+
     </main>
   </div>
 </template>
@@ -219,9 +224,11 @@
 <script>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import ChatWidget from './ChatWidget.vue';
 
 export default {
   name: 'DashBoard',
+  components: { ChatWidget },
   setup() {
     const totalOrders = ref(0);
     const products = ref(0);
@@ -452,6 +459,36 @@ export default {
       );
     });
 
+    const filteredOrders = computed(() => {
+      if (!searchQuery.value.trim()) return orders.value;
+      const q = searchQuery.value.toLowerCase().trim();
+      return orders.value.filter(o => {
+        return String(o.id).toLowerCase().includes(q)
+          || (o.name && o.name.toLowerCase().includes(q))
+          || (o.contact && o.contact.toLowerCase().includes(q))
+          || (o.straat && o.straat.toLowerCase().includes(q))
+          || (o.postcode && o.postcode.toLowerCase().includes(q))
+          || (o.plaats && o.plaats.toLowerCase().includes(q))
+          || (o.status && o.status.toLowerCase().includes(q));
+      });
+    });
+
+    const filteredUsers = computed(() => {
+      if (!searchQuery.value.trim()) return usersList.value;
+      const q = searchQuery.value.toLowerCase().trim();
+      return usersList.value.filter(u => {
+        return (u.username && u.username.toLowerCase().includes(q))
+          || (u.email && u.email.toLowerCase().includes(q))
+          || (u.phone && u.phone.toLowerCase().includes(q))
+          || String(u.user_id).toLowerCase().includes(q);
+      });
+    });
+
+    // no-op handler: computed filters react to `searchQuery`; handler kept for template binding
+    function onSearchInput() {
+      // intentionally empty — computed properties update automatically
+    }
+
     // -------------------- MOUNT --------------------
     onMounted(() => {
       fetchOrders();
@@ -461,11 +498,11 @@ export default {
 
     return {
       omzet, totalOrders, products, orders, view, active,
-      productsList, filteredProducts, searchQuery, loadingProducts,
+      productsList, filteredProducts, filteredOrders, filteredUsers, searchQuery, loadingProducts,
       usersList, openUserModal, deleteUser, userForm, showUserModal, isEditUser, saveUser, closeUserModal,
       handleLogout, setActiveAndFetch,
       showModal, openAddModal, openEditModal, closeModal, saveProduct, modalForm, isEditMode,
-      deleteProduct, filterProducts, deleteOrder
+      deleteProduct, filterProducts, deleteOrder, onSearchInput
     };
   }
 }
@@ -601,6 +638,14 @@ body {
   margin: 0 0 0;
 }
 
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
     .table-wrap {
   border: 1px solid rgba(16, 24, 40, 0.04);
   border-top: 0;
@@ -660,7 +705,7 @@ body {
 }
 
 .btn-add {
-  margin-bottom: 16px;
+  margin: 0;
   padding: 8px 14px;
   background: #0f172a;
   color: #fff;
