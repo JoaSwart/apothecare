@@ -1,5 +1,5 @@
 <?php
-// ==== CORS (Vue dev) ====
+// ==== CORS ====
 header("Access-Control-Allow-Origin: http://localhost:8080");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['success' => false, 'message' => 'Alleen POST toegestaan']);
+    echo json_encode(['success' => false, 'message' => 'Alleen POST']);
     exit;
 }
 
@@ -25,87 +25,74 @@ if (!empty($raw)) {
 }
 $vraag = trim($postData['vraag'] ?? '');
 if ($vraag === '') {
-    echo json_encode(['success' => false, 'message' => 'Vraag is leeg']);
+    echo json_encode(['success' => false, 'message' => 'Vraag leeg']);
     exit;
 }
 
-// ==== 1. OPTIONAL: exact FAQ match ====
-$faqFile = __DIR__ . '/apothecare_faq.json';
-$faqAnswer = null;
-if (file_exists($faqFile)) {
-    $faq = json_decode(file_get_contents($faqFile), true);
-    // Normaliseer zowel vraag als FAQ-keys (kleine letters, trim)
-    $normVraag = mb_strtolower(trim($vraag));
-    foreach ($faq as $q => $a) {
-        if (mb_strtolower(trim($q)) === $normVraag) {
-            $faqAnswer = $a;
-            break;
-        }
-    }
-}
-if ($faqAnswer !== null) {
-    echo json_encode([
-        'success' => true,
-        'vraag'   => $vraag,
-        'antwoord'=> $faqAnswer,
-        'source'  => 'faq'
-    ]);
-    exit;
-}
+// ==== SYSTEM PROMPT (RELAXED & VEILIG) ====
+$system_prompt = <<<EOT
+Je bent ApotheCare Bot, een vriendelijke apotheek-assistent van ApotheCare.nl.
+Je helpt volwassenen (18+) met medicijnen, dosering, bijwerkingen, openingstijden en bezorging.
 
-// ==== 2. SYSTEM PROMPT ====
-$systemPrompt = <<<EOT
-Je bent ApotheCare Bot, een vriendelijke en deskundige apotheek-assistent van de ApotheCare website.
-Je helpt klanten met vragen over medicijnen, dosering, bijwerkingen, wisselwerkingen, openingstijden, bezorging en algemene gezondheidsadviezen.
-- Geef altijd duidelijke, korte antwoorden in het Nederlands.
-- Als je iets niet zeker weet, zeg dan eerlijk: “Ik raad aan dit met een apotheker of arts te bespreken.”
-- Nooit medisch advies geven dat een arts zou moeten geven.
-- Gebruik de officiële productnamen die op ApotheCare.nl staan.
-- Houd je antwoorden beleefd en professioneel.
+REGELS:
+- Antwoord kort en duidelijk in normaal Nederlands.
+- Geef standaarddosering voor volwassenen als het veilig is.
+- Zeg altijd: "Volg de bijsluiter."
+- Alleen "raadpleeg apotheker" bij:
+  - kinderen, zwangeren, lever/nierproblemen
+  - meer dan 3 dagen gebruik
+  - combinatie met andere medicijnen
+- Paracetamol is vrij verkrijgbaar.
+
+VOORBEELD (volg dit format!):
+Vraag: Hoeveel paracetamol mag ik als ik 22 ben?
+Antwoord: Voor volwassenen: 500-1000 mg per keer, maximaal 4x per dag (4000 mg). Volg de bijsluiter.
 EOT;
 
-// ==== 3. CALL OLLAMA API ====
-$ollamaUrl = 'http://localhost:11434/api/generate';
+// ==== API: /api/chat (NIET /api/generate!) ====
+$url = 'http://localhost:11434/api/chat';
 
 $payload = [
-    'model'  => 'llama3.2:3b',          // change if you use another model
-    'prompt' => $systemPrompt . "\n\nVraag: " . $vraag . "\nAntwoord:",
+    'model' => 'llama3.2:3b',
+    'messages' => [
+        ['role' => 'system', 'content' => $system_prompt],
+        // Few-shot voorbeeld (forceert correct gedrag)
+        ['role' => 'user', 'content' => 'Hoeveel paracetamol mag ik als ik 25 ben?'],
+        ['role' => 'assistant', 'content' => 'Voor volwassenen: 500-1000 mg per keer, maximaal 4x per dag (4000 mg). Volg de bijsluiter.'],
+        // Echte vraag
+        ['role' => 'user', 'content' => $vraag]
+    ],
     'stream' => false,
-    'options' => [
-        'temperature' => 0.7,
-        'top_p'       => 0.9,
-    ]
+    'options' => ['temperature' => 0.6]
 ];
 
 $context = stream_context_create([
     'http' => [
-        'method'  => 'POST',
-        'header'  => "Content-Type: application/json\r\n",
+        'method' => 'POST',
+        'header' => "Content-Type: application/json\r\n",
         'content' => json_encode($payload),
-        'timeout' => 60,
+        'timeout' => 60
     ]
 ]);
 
-$response = @file_get_contents($ollamaUrl, false, $context);
+$response = @file_get_contents($url, false, $context);
 if ($response === false) {
-    echo json_encode(['success' => false, 'message' => 'Kan Ollama niet bereiken']);
+    echo json_encode(['success' => false, 'message' => 'Ollama niet bereikbaar']);
     exit;
 }
 
-$decoded = json_decode($response, true);
-if (json_last_error() !== JSON_ERROR_NONE || empty($decoded['response'])) {
-    echo json_encode(['success' => false, 'message' => 'Ongeldig antwoord van Ollama', 'raw' => $response]);
+$data = json_decode($response, true);
+if (!isset($data['message']['content'])) {
+    echo json_encode(['success' => false, 'message' => 'Fout in antwoord', 'raw' => $response]);
     exit;
 }
 
-$antwoord = trim($decoded['response']);
+$antwoord = trim($data['message']['content']);
 
-// ==== 4. FINAL JSON ====
 echo json_encode([
-    'success'  => true,
-    'vraag'    => $vraag,
-    'antwoord' => $antwoord,
-    'source'   => 'llm'
+    'success' => true,
+    'vraag' => $vraag,
+    'antwoord' => $antwoord
 ]);
 exit;
 ?>

@@ -29,9 +29,12 @@ try {
     $stmt->execute([$name, $email, $hashed]);
     echo json_encode(['success' => true, 'message' => 'Registratie succesvol!']);
 } catch (PDOException $e) {
-    // Specifiek checken op duplicate email
     if ($e->getCode() == 23000) {
-        echo json_encode(['success' => false, 'message' => 'E-mail is al in gebruik']);
+        if (str_contains($e->getMessage(), 'username')) {
+            echo json_encode(['success' => false, 'message' => 'Gebruikersnaam is al in gebruik']);
+        } elseif (str_contains($e->getMessage(), 'email')) {
+            echo json_encode(['success' => false, 'message' => 'E-mail is al in gebruik']);
+        }
     } else {
         echo json_encode(['success' => false, 'message' => 'Fout bij registratie']);
     }
