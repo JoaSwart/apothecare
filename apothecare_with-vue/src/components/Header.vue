@@ -21,10 +21,14 @@
       <i v-else @click="toggleSearch" class="fa-solid fa-magnifying-glass"></i>
 
       <!-- User icon -->
-      <i class="fa-solid fa-user" @click="$emit('open-login')"></i>
+      <router-link to="/login" class="profile-icon" aria-label="Login">
+        <i class="fa-solid fa-user"></i>
+      </router-link>
 
       <!-- Cart icon -->
-      <i href="#" @click.prevent="$emit('go-cart')" class="fa-solid fa-cart-shopping"></i>
+      <router-link to="/cart" class="cart-icon" aria-label="Cart">
+        <i class="fa-solid fa-cart-shopping"></i>
+      </router-link>
     </div>
   </header>
 </template>
@@ -113,6 +117,39 @@ nav a {
   top: 50%;
   transform: translateY(-50%);
   z-index: 60;
+}
+
+.cart-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit; 
+  text-decoration: none;
+}
+.cart-icon:focus {
+  outline: none;
+}
+.cart-icon i {
+  color: #111; 
+}
+
+.profile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  text-decoration: none;
+}
+.profile-icon:focus {
+  outline: none;
+}
+.profile-icon i {
+  color: #111;
+}
+
+.cart-icon.router-link-active i,
+.profile-icon.router-link-active i {
+  color: #111 !important;
 }
 
 @media (max-width: 768px) {
