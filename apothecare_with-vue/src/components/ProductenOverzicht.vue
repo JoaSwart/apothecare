@@ -277,8 +277,9 @@ body {
   display: flex;
   align-items: center;
   width: fit-content;
-  background-color: #f9fafb;
+  background-color: #bdbdbdff;
   border-radius: 999px;
+  border: 1px solid #adadadff;
   overflow: hidden;
 }
 .zoekveld {

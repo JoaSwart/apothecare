@@ -137,6 +137,7 @@ export default {
   padding: 18px 0;
   border-bottom: 1px solid #eee;
   align-items: center;
+  min-width: 450px;
 }
 .item-image {
   width: 96px;
